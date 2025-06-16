@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Ordem de Serviço</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"], 
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-cancel {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Editar Ordem de Serviço</h1>
+        
+        <div class="nav">
+            <a href="{{ url_for('clientes') }}">Clientes</a>
+            <a href="{{ url_for('ordens_servico') }}">Ordens de Serviço</a>
+            <a href="{{ url_for('estoque') }}">Estoque</a>
+        </div>
+
+        <h2>Editar Informações da OS</h2>
+        <form action="{{ url_for('editar_os', id=ordem['id']) }}" method="post">
+            <label for="cliente_id">Cliente:</label>
+            <select id="cliente_id" name="cliente_id" required>
+                {% for cliente in clientes %}
+                <option value="{{ cliente['id'] }}" {% if cliente['id'] == ordem['cliente_id'] %}selected{% endif %}>
+                    {{ cliente['nome'] }}
+                </option>
+                {% endfor %}
+            </select>
+            
+            <label for="descricao">Descrição do Serviço:</label>
+            <textarea id="descricao" name="descricao" rows="4" required>{{ ordem['descricao'] }}</textarea>
+            
+            <label for="data">Data:</label>
+            <input type="date" id="data" name="data" value="{{ ordem['data'] }}" required>
+            
+            <input type="submit" value="Salvar Alterações">
+            <a href="{{ url_for('ordens_servico') }}" class="btn-cancel">Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>
