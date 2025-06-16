@@ -283,33 +283,31 @@ def gerar_pdf_os(id):
     pdf.cell(0, 8, f'E-mail: {cliente["email"] or "Não informado"}', 0, 1)
     pdf.cell(0, 8, f'Endereço: {cliente["endereco"] or "Não informado"}', 0, 1)
     pdf.ln(5)
-    
-    # Tabela 1: Informações da Ordem
+      # Tabela 1: Informações da Ordem
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 10, 'Informações da Ordem de Serviço', 0, 1)
     
-    # Cabeçalho da tabela
+    # Configurações da fonte e cor
     pdf.set_font('Arial', 'B', 10)
     pdf.set_fill_color(230, 230, 230)
     
-    # Definir larguras das colunas
-    col_width_data = 40
-    col_width_cliente = 50
-    col_width_veiculo = 50
-    col_width_placa = 40
-    
-    # Cabeçalho da primeira tabela
-    pdf.cell(col_width_data, 10, 'Data de Entrada', 1, 0, 'C', 1)
-    pdf.cell(col_width_cliente, 10, 'Cliente', 1, 0, 'C', 1)
-    pdf.cell(col_width_veiculo, 10, 'Veículo', 1, 0, 'C', 1)
-    pdf.cell(col_width_placa, 10, 'Placa', 1, 1, 'C', 1)
-    
-    # Dados da primeira tabela
+    # Linha 1: Data de Entrada
+    pdf.cell(50, 10, 'Data de Entrada:', 1, 0, 'L', 1)
     pdf.set_font('Arial', '', 10)
-    pdf.cell(col_width_data, 10, ordem["data"], 1, 0, 'C')
-    pdf.cell(col_width_cliente, 10, cliente["nome"], 1, 0, 'C')
-    pdf.cell(col_width_veiculo, 10, ordem["veiculo"] or "Não informado", 1, 0, 'C')
-    pdf.cell(col_width_placa, 10, ordem["placa"] or "Não informada", 1, 1, 'C')
+    pdf.cell(0, 10, ordem["data"], 1, 1, 'L')
+    
+    # Linha 2: Cliente
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(50, 10, 'Cliente:', 1, 0, 'L', 1)
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(0, 10, cliente["nome"], 1, 1, 'L')
+    
+    # Linha 3: Veículo e Placa
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(50, 10, 'Veículo/Placa:', 1, 0, 'L', 1)
+    pdf.set_font('Arial', '', 10)
+    veiculo_placa = f"{ordem['veiculo'] or 'Não informado'} - {ordem['placa'] or 'Sem placa'}"
+    pdf.cell(0, 10, veiculo_placa, 1, 1, 'L')
     
     pdf.ln(5)
       # Tabela 2: Descrição do Serviço e Valor
