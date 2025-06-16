@@ -185,18 +185,44 @@ def ordens_servico():
 def adicionar_os():
     conn = get_db_connection()
     cliente_id = request.form['cliente_id']
-    descricao = request.form['descricao']
     data = request.form['data']
     veiculo = request.form.get('veiculo', '')
     placa = request.form.get('placa', '')
-    valor = request.form.get('valor', '0')
     observacoes = request.form.get('observacoes', '')
-    try:
-        valor = float(valor)
-    except (ValueError, TypeError):
-        valor = 0.0
-    conn.execute('INSERT INTO ordens_servico (cliente_id, descricao, data, veiculo, placa, valor, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                 (cliente_id, descricao, data, veiculo, placa, valor, observacoes))
+    
+    # Pegar as descrições e valores dos serviços
+    descricoes = request.form.getlist('descricoes[]')
+    valores = request.form.getlist('valores[]')
+    
+    # Calcular o valor total
+    valor_total = 0
+    for valor in valores:
+        try:
+            valor_total += float(valor)
+        except (ValueError, TypeError):
+            continue
+    
+    # Criar a ordem de serviço
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO ordens_servico (cliente_id, data, veiculo, placa, valor, observacoes)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (cliente_id, data, veiculo, placa, valor_total, observacoes))
+    
+    # Pegar o ID da ordem recém-criada
+    ordem_id = cursor.lastrowid
+    
+    # Inserir cada serviço
+    for descricao, valor in zip(descricoes, valores):
+        try:
+            valor_float = float(valor)
+        except (ValueError, TypeError):
+            valor_float = 0.0
+        cursor.execute('''
+            INSERT INTO servicos_os (ordem_servico_id, descricao, valor)
+            VALUES (?, ?, ?)
+        ''', (ordem_id, descricao, valor_float))
+    
     conn.commit()
     conn.close()
     return redirect(url_for('ordens_servico'))
