@@ -125,9 +125,14 @@
                 
                 <label for="placa">Placa:</label>
                 <input type="text" id="placa" name="placa" placeholder="Placa do veículo">
-                
-                <label for="data">Data:</label>
+                  <label for="data">Data:</label>
                 <input type="date" id="data" name="data" required>
+                
+                <label for="valor">Valor do Serviço (R$):</label>
+                <input type="number" id="valor" name="valor" step="0.01" min="0" placeholder="0.00">
+
+                <label for="observacoes">Observações:</label>
+                <textarea id="observacoes" name="observacoes" rows="4" placeholder="Observações adicionais sobre o serviço"></textarea>
                 
                 <input type="submit" value="Adicionar">
             </form>
@@ -138,9 +143,10 @@
                         <th>ID</th>
                         <th>Cliente</th>
                         <th>Veículo</th>
-                        <th>Placa</th>
-                        <th>Descrição</th>
+                        <th>Placa</th>                        <th>Descrição</th>
                         <th>Data</th>
+                        <th>Valor (R$)</th>
+                        <th>Observações</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -150,9 +156,11 @@
                         <td>{{ os['id'] }}</td>
                         <td>{{ os['cliente'] }}</td>
                         <td>{{ os['veiculo'] or '-' }}</td>
-                        <td>{{ os['placa'] or '-' }}</td>
-                        <td>{{ os['descricao'] }}</td>
-                        <td>{{ os['data'] }}</td>                        <td class="actions">
+                        <td>{{ os['placa'] or '-' }}</td>                        <td>{{ os['descricao'] }}</td>
+                        <td>{{ os['data'] }}</td>
+                        <td>{{ "%.2f"|format(os['valor']|float) }}</td>
+                        <td>{{ os['observacoes'] or '-' }}</td>
+                        <td class="actions">
                             <a href="{{ url_for('editar_os', id=os['id']) }}">Editar</a>
                             <a href="{{ url_for('excluir_os', id=os['id']) }}" class="delete">Excluir</a>
                             <a href="{{ url_for('gerar_pdf_os', id=os['id']) }}" target="_blank" style="background-color: #FF9800;">PDF</a>

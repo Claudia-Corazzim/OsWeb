@@ -39,12 +39,11 @@ def criar_tabelas():
     else:
         # Se já existir, não faz nada
         pass
-        
-    # Verificar se é necessário atualizar a tabela de ordens de serviço
+          # Verificar se é necessário atualizar a tabela de ordens de serviço
     try:
-        # Verifica se as colunas veiculo e placa existem
-        conn.execute('SELECT veiculo, placa FROM ordens_servico LIMIT 1')
-    except sqlite3.OperationalError:        # Se não existir, cria uma nova tabela com as colunas
+        # Verifica se as colunas veiculo, placa e valor existem
+        conn.execute('SELECT veiculo, placa, valor FROM ordens_servico LIMIT 1')
+    except sqlite3.OperationalError:# Se não existir, cria uma nova tabela com as colunas
         conn.execute('DROP TABLE IF EXISTS ordens_servico')
         conn.execute('''
             CREATE TABLE ordens_servico (
@@ -161,13 +160,20 @@ def ordens_servico():
         data = request.form['data']
         veiculo = request.form.get('veiculo', '')
         placa = request.form.get('placa', '')
-        conn.execute('INSERT INTO ordens_servico (cliente_id, descricao, data, veiculo, placa) VALUES (?, ?, ?, ?, ?)',
-                     (cliente_id, descricao, data, veiculo, placa))
+        valor = request.form.get('valor', '0')
+        observacoes = request.form.get('observacoes', '')
+        try:
+            valor = float(valor)
+        except (ValueError, TypeError):
+            valor = 0.0
+        conn.execute('INSERT INTO ordens_servico (cliente_id, descricao, data, veiculo, placa, valor, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                     (cliente_id, descricao, data, veiculo, placa, valor, observacoes))
         conn.commit()
         return redirect(url_for('ordens_servico'))
     
     os_list = conn.execute('''
-        SELECT os.id, c.nome AS cliente, os.descricao, os.data, os.cliente_id, os.veiculo, os.placa
+        SELECT os.id, c.nome AS cliente, os.descricao, os.data, 
+               os.cliente_id, os.veiculo, os.placa, os.valor, os.observacoes
         FROM ordens_servico os
         JOIN clientes c ON os.cliente_id = c.id
     ''').fetchall()
@@ -183,8 +189,14 @@ def adicionar_os():
     data = request.form['data']
     veiculo = request.form.get('veiculo', '')
     placa = request.form.get('placa', '')
-    conn.execute('INSERT INTO ordens_servico (cliente_id, descricao, data, veiculo, placa) VALUES (?, ?, ?, ?, ?)',
-                 (cliente_id, descricao, data, veiculo, placa))
+    valor = request.form.get('valor', '0')
+    observacoes = request.form.get('observacoes', '')
+    try:
+        valor = float(valor)
+    except (ValueError, TypeError):
+        valor = 0.0
+    conn.execute('INSERT INTO ordens_servico (cliente_id, descricao, data, veiculo, placa, valor, observacoes) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                 (cliente_id, descricao, data, veiculo, placa, valor, observacoes))
     conn.commit()
     conn.close()
     return redirect(url_for('ordens_servico'))
@@ -198,8 +210,14 @@ def editar_os(id):
         data = request.form['data']
         veiculo = request.form.get('veiculo', '')
         placa = request.form.get('placa', '')
-        conn.execute('UPDATE ordens_servico SET cliente_id = ?, descricao = ?, data = ?, veiculo = ?, placa = ? WHERE id = ?',
-                     (cliente_id, descricao, data, veiculo, placa, id))
+        valor = request.form.get('valor', '0')
+        observacoes = request.form.get('observacoes', '')
+        try:
+            valor = float(valor)
+        except (ValueError, TypeError):
+            valor = 0.0
+        conn.execute('UPDATE ordens_servico SET cliente_id = ?, descricao = ?, data = ?, veiculo = ?, placa = ?, valor = ?, observacoes = ? WHERE id = ?',
+                     (cliente_id, descricao, data, veiculo, placa, valor, observacoes, id))
         conn.commit()
         conn.close()
         return redirect(url_for('ordens_servico'))
@@ -323,25 +341,27 @@ def gerar_pdf_os(id):
     
     # Registrar posição final após a multi_cell
     end_y = pdf.get_y()
-    cell_height = end_y - start_y
-    
-    # Voltar para a posição correta para a célula de valor
+    cell_height = end_y - start_y    # Voltar para a posição correta para a célula de valor
     pdf.set_xy(x_position + col_width_desc, start_y)
-    pdf.cell(col_width_valor, cell_height, "0,00", 1, 1, 'C')  # Valor exemplo, ajuste conforme necessário
-    
-    # Total
+    try:
+        valor = float(ordem['valor']) if ordem['valor'] is not None else 0.0
+        valor_formatado = f"{valor:,.2f}".replace(',', '.')
+    except (ValueError, TypeError):
+        valor_formatado = "0,00"
+    pdf.cell(col_width_valor, cell_height, valor_formatado, 1, 1, 'C')
+      # Total
     pdf.set_font('Arial', 'B', 10)
     pdf.cell(col_width_desc, 10, 'Total', 1, 0, 'R', 1)
-    pdf.cell(col_width_valor, 10, "0,00", 1, 1, 'C', 1)  # Total exemplo, ajuste conforme necessário
+    pdf.cell(col_width_valor, 10, valor_formatado, 1, 1, 'C', 1)
     
     pdf.ln(5)
-    
-    # Tabela 3: Observações
+      # Tabela 3: Observações
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 10, 'Observações', 0, 1)
-    
+      # Observações da OS
     pdf.set_font('Arial', '', 10)
-    pdf.cell(0, 30, '', 1, 1, 'L')  # Caixa vazia para observações manuscritas
+    observacoes_text = ordem['observacoes'] if ordem['observacoes'] else 'Sem observações'
+    pdf.multi_cell(0, 10, observacoes_text, 1, 'L')
     
     pdf.ln(5)
     
