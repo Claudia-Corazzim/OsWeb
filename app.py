@@ -52,16 +52,24 @@ def criar_tabelas():
         ''')
     else:
         # Se já existir, não faz nada
+        pass    # Verificar se é necessário atualizar a tabela de peças
+    try:
+        # Verifica se a coluna valor existe
+        conn.execute('SELECT valor FROM pecas LIMIT 1')
+    except sqlite3.OperationalError:
+        # Se não existir, cria uma nova tabela com a coluna
+        conn.execute('DROP TABLE IF EXISTS pecas')
+        conn.execute('''
+            CREATE TABLE pecas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                quantidade INTEGER NOT NULL,
+                valor REAL
+            );
+        ''')
+    else:
+        # Se já existir, não faz nada
         pass
-
-    # Tabela de peças (Estoque)
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS pecas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            quantidade INTEGER NOT NULL
-        );
-    ''')
 
     conn.commit()
     conn.close()
@@ -199,7 +207,8 @@ def estoque():
     if request.method == 'POST':
         nome = request.form['nome']
         quantidade = request.form['quantidade']
-        conn.execute('INSERT INTO pecas (nome, quantidade) VALUES (?, ?)', (nome, quantidade))
+        valor = request.form.get('valor', 0)
+        conn.execute('INSERT INTO pecas (nome, quantidade, valor) VALUES (?, ?, ?)', (nome, quantidade, valor))
         conn.commit()
         return redirect(url_for('estoque'))
     pecas = conn.execute('SELECT * FROM pecas').fetchall()
@@ -211,8 +220,9 @@ def adicionar_peca():
     conn = get_db_connection()
     nome = request.form['nome']
     quantidade = request.form['quantidade']
-    conn.execute('INSERT INTO pecas (nome, quantidade) VALUES (?, ?)', 
-                 (nome, quantidade))
+    valor = request.form.get('valor', 0)
+    conn.execute('INSERT INTO pecas (nome, quantidade, valor) VALUES (?, ?, ?)', 
+                 (nome, quantidade, valor))
     conn.commit()
     conn.close()
     return redirect(url_for('estoque'))
@@ -223,8 +233,9 @@ def editar_peca(id):
     if request.method == 'POST':
         nome = request.form['nome']
         quantidade = request.form['quantidade']
-        conn.execute('UPDATE pecas SET nome = ?, quantidade = ? WHERE id = ?',
-                     (nome, quantidade, id))
+        valor = request.form.get('valor', 0)
+        conn.execute('UPDATE pecas SET nome = ?, quantidade = ?, valor = ? WHERE id = ?',
+                     (nome, quantidade, valor, id))
         conn.commit()
         conn.close()
         return redirect(url_for('estoque'))
