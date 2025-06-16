@@ -256,34 +256,101 @@ def gerar_pdf_os(id):
     pdf.cell(0, 10, f'ORDEM DE SERVIÇO Nº {ordem["id"]}', 0, 1, 'C')
     pdf.ln(5)
     
-    # Informações da ordem
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 10, 'Informações da Ordem de Serviço', 0, 1)
-    pdf.set_font('Arial', '', 11)
-    pdf.cell(0, 8, f'Data: {ordem["data"]}', 0, 1)
-    pdf.cell(0, 8, f'Veículo: {ordem["veiculo"] or "Não informado"}', 0, 1)
-    pdf.cell(0, 8, f'Placa: {ordem["placa"] or "Não informada"}', 0, 1)
-    pdf.ln(5)
-    
     # Informações do cliente
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 10, 'Dados do Cliente', 0, 1)
     pdf.set_font('Arial', '', 11)
     pdf.cell(0, 8, f'Nome: {cliente["nome"]}', 0, 1)
     pdf.cell(0, 8, f'Telefone: {cliente["telefone"]}', 0, 1)
-    pdf.cell(0, 8, f'E-mail: {cliente["email"]}', 0, 1)
-    pdf.cell(0, 8, f'Endereço: {cliente["endereco"]}', 0, 1)
+    pdf.cell(0, 8, f'E-mail: {cliente["email"] or "Não informado"}', 0, 1)
+    pdf.cell(0, 8, f'Endereço: {cliente["endereco"] or "Não informado"}', 0, 1)
     pdf.ln(5)
     
-    # Descrição do serviço
+    # Tabela 1: Informações da Ordem
     pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 10, 'Descrição do Serviço', 0, 1)
-    pdf.set_font('Arial', '', 11)
+    pdf.cell(0, 10, 'Informações da Ordem de Serviço', 0, 1)
     
-    # Quebrar texto longo em linhas
+    # Cabeçalho da tabela
+    pdf.set_font('Arial', 'B', 10)
+    pdf.set_fill_color(230, 230, 230)
+    
+    # Definir larguras das colunas
+    col_width_data = 40
+    col_width_cliente = 50
+    col_width_veiculo = 50
+    col_width_placa = 40
+    
+    # Cabeçalho da primeira tabela
+    pdf.cell(col_width_data, 10, 'Data de Entrada', 1, 0, 'C', 1)
+    pdf.cell(col_width_cliente, 10, 'Cliente', 1, 0, 'C', 1)
+    pdf.cell(col_width_veiculo, 10, 'Veículo', 1, 0, 'C', 1)
+    pdf.cell(col_width_placa, 10, 'Placa', 1, 1, 'C', 1)
+    
+    # Dados da primeira tabela
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(col_width_data, 10, ordem["data"], 1, 0, 'C')
+    pdf.cell(col_width_cliente, 10, cliente["nome"], 1, 0, 'C')
+    pdf.cell(col_width_veiculo, 10, ordem["veiculo"] or "Não informado", 1, 0, 'C')
+    pdf.cell(col_width_placa, 10, ordem["placa"] or "Não informada", 1, 1, 'C')
+    
+    pdf.ln(5)
+      # Tabela 2: Descrição do Serviço e Valor
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Descrição do Serviço e Valor', 0, 1)
+    
+    # Cabeçalho da segunda tabela
+    pdf.set_font('Arial', 'B', 10)
+    col_width_desc = 140
+    col_width_valor = 40
+    
+    pdf.cell(col_width_desc, 10, 'Descrição', 1, 0, 'C', 1)
+    pdf.cell(col_width_valor, 10, 'Valor (R$)', 1, 1, 'C', 1)
+    
+    # Descrição do serviço na tabela
+    pdf.set_font('Arial', '', 10)
+    
+    # Salvar a posição X
+    x_position = pdf.get_x()
+    
+    # Calcular altura necessária para a descrição
     descricao_text = ordem["descricao"]
-    pdf.multi_cell(0, 8, descricao_text)
-    pdf.ln(20)
+    
+    # Registrar posição inicial
+    start_y = pdf.get_y()
+    
+    # Desenhar a célula de descrição
+    pdf.multi_cell(col_width_desc, 10, descricao_text, 1, 'L')
+    
+    # Registrar posição final após a multi_cell
+    end_y = pdf.get_y()
+    cell_height = end_y - start_y
+    
+    # Voltar para a posição correta para a célula de valor
+    pdf.set_xy(x_position + col_width_desc, start_y)
+    pdf.cell(col_width_valor, cell_height, "0,00", 1, 1, 'C')  # Valor exemplo, ajuste conforme necessário
+    
+    # Total
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(col_width_desc, 10, 'Total', 1, 0, 'R', 1)
+    pdf.cell(col_width_valor, 10, "0,00", 1, 1, 'C', 1)  # Total exemplo, ajuste conforme necessário
+    
+    pdf.ln(5)
+    
+    # Tabela 3: Observações
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Observações', 0, 1)
+    
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(0, 30, '', 1, 1, 'L')  # Caixa vazia para observações manuscritas
+    
+    pdf.ln(5)
+    
+    # Status e Data de Saída
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(90, 10, 'Data de Saída: ____/____/________', 0, 0, 'L')
+    pdf.cell(90, 10, 'Status: _________________________', 0, 1, 'L')
+    
+    pdf.ln(10)
     
     # Assinaturas
     pdf.cell(90, 10, '_______________________________', 0, 0, 'C')
