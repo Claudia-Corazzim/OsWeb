@@ -44,8 +44,7 @@ def criar_tabelas():
     try:
         # Verifica se as colunas veiculo e placa existem
         conn.execute('SELECT veiculo, placa FROM ordens_servico LIMIT 1')
-    except sqlite3.OperationalError:
-        # Se não existir, cria uma nova tabela com as colunas
+    except sqlite3.OperationalError:        # Se não existir, cria uma nova tabela com as colunas
         conn.execute('DROP TABLE IF EXISTS ordens_servico')
         conn.execute('''
             CREATE TABLE ordens_servico (
@@ -60,23 +59,33 @@ def criar_tabelas():
         ''')
     else:
         # Se já existir, não faz nada
-        pass    # Verificar se é necessário atualizar a tabela de peças
+        pass
+        
+    # Verificar se é necessário atualizar a tabela de peças
     try:
-        # Verifica se a coluna valor existe
-        conn.execute('SELECT valor FROM pecas LIMIT 1')
+        # Verifica se a coluna valor_instalado existe
+        conn.execute('SELECT valor_instalado FROM pecas LIMIT 1')
     except sqlite3.OperationalError:
-        # Se não existir, cria uma nova tabela com a coluna
-        conn.execute('DROP TABLE IF EXISTS pecas')
-        conn.execute('''
-            CREATE TABLE pecas (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                quantidade INTEGER NOT NULL,
-                valor REAL
-            );
-        ''')
+        # Se a coluna valor_instalado não existir, adiciona-a
+        try:
+            conn.execute('ALTER TABLE pecas ADD COLUMN valor_instalado REAL')
+            print("Coluna valor_instalado adicionada com sucesso à tabela pecas")
+        except sqlite3.OperationalError as e:
+            # Se houver um erro na alteração, recria a tabela
+            print(f"Erro ao adicionar coluna: {e}. Recriando tabela...")
+            conn.execute('DROP TABLE IF EXISTS pecas')
+            conn.execute('''
+                CREATE TABLE pecas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    quantidade INTEGER NOT NULL,
+                    valor REAL,
+                    valor_instalado REAL
+                );
+            ''')
+            print("Tabela pecas recriada com sucesso!")
     else:
-        # Se já existir, não faz nada
+        # Se a coluna valor_instalado já existir, não faz nada
         pass
 
     conn.commit()
@@ -306,7 +315,9 @@ def estoque():
         nome = request.form['nome']
         quantidade = request.form['quantidade']
         valor = request.form.get('valor', 0)
-        conn.execute('INSERT INTO pecas (nome, quantidade, valor) VALUES (?, ?, ?)', (nome, quantidade, valor))
+        valor_instalado = request.form.get('valor_instalado', 0)
+        conn.execute('INSERT INTO pecas (nome, quantidade, valor, valor_instalado) VALUES (?, ?, ?, ?)', 
+                    (nome, quantidade, valor, valor_instalado))
         conn.commit()
         return redirect(url_for('estoque'))
     pecas = conn.execute('SELECT * FROM pecas').fetchall()
@@ -319,8 +330,9 @@ def adicionar_peca():
     nome = request.form['nome']
     quantidade = request.form['quantidade']
     valor = request.form.get('valor', 0)
-    conn.execute('INSERT INTO pecas (nome, quantidade, valor) VALUES (?, ?, ?)', 
-                 (nome, quantidade, valor))
+    valor_instalado = request.form.get('valor_instalado', 0)
+    conn.execute('INSERT INTO pecas (nome, quantidade, valor, valor_instalado) VALUES (?, ?, ?, ?)', 
+                 (nome, quantidade, valor, valor_instalado))
     conn.commit()
     conn.close()
     return redirect(url_for('estoque'))
@@ -332,8 +344,9 @@ def editar_peca(id):
         nome = request.form['nome']
         quantidade = request.form['quantidade']
         valor = request.form.get('valor', 0)
-        conn.execute('UPDATE pecas SET nome = ?, quantidade = ?, valor = ? WHERE id = ?',
-                     (nome, quantidade, valor, id))
+        valor_instalado = request.form.get('valor_instalado', 0)
+        conn.execute('UPDATE pecas SET nome = ?, quantidade = ?, valor = ?, valor_instalado = ? WHERE id = ?',
+                     (nome, quantidade, valor, valor_instalado, id))
         conn.commit()
         conn.close()
         return redirect(url_for('estoque'))

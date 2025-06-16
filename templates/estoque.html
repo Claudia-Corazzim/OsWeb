@@ -96,9 +96,7 @@
             <a href="{{ url_for('clientes') }}">Clientes</a>
             <a href="{{ url_for('ordens_servico') }}">Ordens de Serviço</a>
             <a href="{{ url_for('estoque') }}">Estoque</a>
-        </div>
-
-        <h2>Adicionar Item ao Estoque</h2>        <form action="{{ url_for('adicionar_peca') }}" method="post">
+        </div>        <h2>Adicionar Item ao Estoque</h2>        <form action="{{ url_for('adicionar_peca') }}" method="post">
             <label for="nome">Nome da Peça:</label>
             <input type="text" id="nome" name="nome" required>
             
@@ -108,16 +106,19 @@
             <label for="valor">Valor da Peça (R$):</label>
             <input type="number" id="valor" name="valor" min="0" step="0.01" required>
             
+            <label for="valor_instalado">Valor Instalado (R$):</label>
+            <input type="number" id="valor_instalado" name="valor_instalado" min="0" step="0.01">
+            
             <input type="submit" value="Adicionar">
         </form>
 
         <h2>Lista de Itens</h2>
-        <table>
-            <thead>                <tr>
+        <table>            <thead>                <tr>
                     <th>ID</th>
                     <th>Nome da Peça</th>
                     <th>Quantidade</th>
                     <th>Valor (R$)</th>
+                    <th>Valor Instalado (R$)</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -127,6 +128,7 @@
                     <td>{{ peca['nome'] }}</td>
                     <td>{{ peca['quantidade'] }}</td>
                     <td>{{ peca['valor'] if peca['valor'] else '0.00' }}</td>
+                    <td>{{ peca['valor_instalado'] if peca['valor_instalado'] else '0.00' }}</td>
                     <td class="actions">
                         <a href="{{ url_for('editar_peca', id=peca['id']) }}">Editar</a>
                         <a href="{{ url_for('excluir_peca', id=peca['id']) }}" class="delete">Excluir</a>

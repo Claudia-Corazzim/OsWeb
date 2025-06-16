@@ -301,19 +301,19 @@ class EstoqueAPI(Resource):
             
             if not peca:
                 return {'error': 'Peça não encontrada'}, 404
-                
-            return jsonify(peca)
-        else:
-            # Obter todas as peças
+            
+            return peca
+        else:            # Obter todas as peças
             pecas = conn.execute('SELECT * FROM pecas').fetchall()
             conn.close()
-            return jsonify(pecas)
+            return pecas
     
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('nome', type=str, required=True, help='Nome é obrigatório')
         parser.add_argument('quantidade', type=int, required=True, help='Quantidade é obrigatória')
         parser.add_argument('valor', type=float)
+        parser.add_argument('valor_instalado', type=float)
         args = parser.parse_args()
         
         conn = get_db_connection()
@@ -321,20 +321,19 @@ class EstoqueAPI(Resource):
         
         try:
             cursor.execute(
-                'INSERT INTO pecas (nome, quantidade, valor) VALUES (?, ?, ?)',
-                (args['nome'], args['quantidade'], args.get('valor', 0))
+                'INSERT INTO pecas (nome, quantidade, valor, valor_instalado) VALUES (?, ?, ?, ?)',
+                (args['nome'], args['quantidade'], args.get('valor', 0), args.get('valor_instalado', 0))
             )
             conn.commit()
             
             # Obter o ID da peça inserida
             peca_id = cursor.lastrowid
-            
-            # Buscar a peça recém-criada
+              # Buscar a peça recém-criada
             conn.row_factory = dict_factory
             peca = conn.execute('SELECT * FROM pecas WHERE id = ?', (peca_id,)).fetchone()
             
             conn.close()
-            return jsonify(peca), 201
+            return peca, 201
         except Exception as e:
             conn.close()
             return {'error': str(e)}, 500
@@ -344,6 +343,7 @@ class EstoqueAPI(Resource):
         parser.add_argument('nome', type=str)
         parser.add_argument('quantidade', type=int)
         parser.add_argument('valor', type=float)
+        parser.add_argument('valor_instalado', type=float)
         args = parser.parse_args()
         
         conn = get_db_connection()
@@ -358,7 +358,7 @@ class EstoqueAPI(Resource):
         updates = []
         values = []
         
-        for field in ['nome', 'quantidade', 'valor']:
+        for field in ['nome', 'quantidade', 'valor', 'valor_instalado']:
             if args[field] is not None:
                 updates.append(f"{field} = ?")
                 values.append(args[field])
@@ -374,13 +374,12 @@ class EstoqueAPI(Resource):
                 values
             )
             conn.commit()
-            
-            # Buscar a peça atualizada
+              # Buscar a peça atualizada
             conn.row_factory = dict_factory
             peca_atualizada = conn.execute('SELECT * FROM pecas WHERE id = ?', (peca_id,)).fetchone()
             
             conn.close()
-            return jsonify(peca_atualizada), 200
+            return peca_atualizada, 200
         except Exception as e:
             conn.close()
             return {'error': str(e)}, 500
@@ -398,6 +397,10 @@ class EstoqueAPI(Resource):
             conn.execute('DELETE FROM pecas WHERE id = ?', (peca_id,))
             conn.commit()
             conn.close()
+            return {'message': 'Peça excluída com sucesso'}, 200
+        except Exception as e:
+            conn.close()
+            return {'error': str(e)}, 500
             return {'message': 'Peça excluída com sucesso'}, 200
         except Exception as e:
             conn.close()
