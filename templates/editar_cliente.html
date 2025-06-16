@@ -76,9 +76,7 @@
             <a href="{{ url_for('clientes') }}">Clientes</a>
             <a href="{{ url_for('ordens_servico') }}">Ordens de Serviço</a>
             <a href="{{ url_for('estoque') }}">Estoque</a>
-        </div>
-
-        <h2>Editar Informações do Cliente</h2>
+        </div>        <h2>Editar Informações do Cliente</h2>
         <form action="{{ url_for('editar_cliente', id=cliente['id']) }}" method="post">
             <label for="nome">Nome:</label>
             <input type="text" id="nome" name="nome" value="{{ cliente['nome'] }}" required>
@@ -89,14 +87,75 @@
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" value="{{ cliente['email'] }}" required>
             
-            <label for="endereco">Endereço:</label>
-            <input type="text" id="endereco" name="endereco" value="{{ cliente['endereco'] }}" required>
-              <input type="submit" value="Salvar Alterações">
+            <div class="endereco-container">
+                <label for="cep">CEP:</label>
+                <input type="text" id="cep" name="cep" maxlength="9" placeholder="00000-000">
+                
+                <label for="logradouro">Logradouro:</label>
+                <input type="text" id="logradouro" name="logradouro">
+                
+                <label for="numero">Número:</label>
+                <input type="text" id="numero" name="numero">
+                
+                <label for="bairro">Bairro:</label>
+                <input type="text" id="bairro" name="bairro">
+                
+                <label for="cidade">Cidade:</label>
+                <input type="text" id="cidade" name="cidade">
+                
+                <label for="estado">Estado:</label>
+                <input type="text" id="estado" name="estado" maxlength="2">
+                
+                <input type="hidden" id="endereco" name="endereco" value="{{ cliente['endereco'] }}">
+            </div>
+            
+            <input type="submit" value="Salvar Alterações">
             <a href="{{ url_for('clientes') }}" class="btn-cancel">Cancelar</a>
         </form>
     </div>
-    
-    <!-- JavaScript -->
+      <!-- JavaScript -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/cep.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Preencher os campos de endereço a partir do endereço completo
+            const enderecoCompleto = document.getElementById('endereco').value;
+            if (enderecoCompleto) {
+                try {
+                    // Tenta extrair as partes do endereço
+                    const partes = enderecoCompleto.split(', ');
+                    if (partes.length >= 4) {
+                        document.getElementById('logradouro').value = partes[0];
+                        document.getElementById('numero').value = partes[1];
+                        document.getElementById('bairro').value = partes[2];
+                        
+                        const cidadeEstado = partes[3].split('-');
+                        if (cidadeEstado.length >= 2) {
+                            document.getElementById('cidade').value = cidadeEstado[0];
+                            document.getElementById('estado').value = cidadeEstado[1];
+                        }
+                    }
+                } catch (e) {
+                    console.error('Erro ao processar endereço:', e);
+                }
+            }
+            
+            // Concatenar endereço completo antes de enviar o formulário
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const logradouro = document.getElementById('logradouro').value;
+                const numero = document.getElementById('numero').value;
+                const bairro = document.getElementById('bairro').value;
+                const cidade = document.getElementById('cidade').value;
+                const estado = document.getElementById('estado').value;
+                
+                const enderecoCompleto = `${logradouro}, ${numero}, ${bairro}, ${cidade}-${estado}`;
+                document.getElementById('endereco').value = enderecoCompleto;
+                
+                form.submit();
+            });
+        });
+    </script>
 </body>
 </html>

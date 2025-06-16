@@ -4,8 +4,12 @@ from datetime import datetime
 from fpdf import FPDF
 import os
 import tempfile
+# Importar a API REST
+from api import init_api
 
 app = Flask(__name__)
+# Inicializar a API REST
+init_api(app)
 
 def get_db_connection():
     conn = sqlite3.connect('banco.db')

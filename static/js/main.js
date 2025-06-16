@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initTableFilters();
     initDeleteConfirmations();
     initMaskInputs();
+    initCepConsulta();
 });
 
 /**
@@ -173,6 +174,82 @@ function initMaskInputs() {
             e.target.value = value;
         });
     });
+    
+    // Máscara para CEP
+    const cepInputs = document.querySelectorAll('input[id="cep"]');
+    cepInputs.forEach(input => {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            // Formato 00000-000
+            if (value.length > 5) {
+                value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+            }
+            
+            e.target.value = value;
+        });
+    });
+}
+
+/**
+ * Inicializa a consulta de CEP
+ */
+function initCepConsulta() {
+    const cepInputs = document.querySelectorAll('input[id="cep"]');
+    
+    cepInputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            const cep = input.value.replace(/\D/g, '');
+            
+            if (cep.length !== 8) {
+                return;
+            }
+            
+            // Mostrar indicador de carregamento
+            const loadingDiv = document.createElement('div');
+            loadingDiv.classList.add('loading-indicator');
+            loadingDiv.textContent = 'Consultando CEP...';
+            input.parentNode.insertBefore(loadingDiv, input.nextSibling);
+            
+            // Realizar a consulta
+            fetch(`/api/consulta_cep/${cep}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Remover indicador de carregamento
+                    if (loadingDiv.parentNode) {
+                        loadingDiv.parentNode.removeChild(loadingDiv);
+                    }
+                    
+                    if (data.erro) {
+                        alert(`Erro: ${data.erro}`);
+                        return;
+                    }
+                    
+                    if (data.success) {
+                        // Preencher os campos de endereço
+                        const endereco = data.endereco;
+                        
+                        // Montar o endereço completo
+                        const enderecoCompleto = `${endereco.logradouro}, ${endereco.bairro}, ${endereco.cidade}-${endereco.estado}, ${endereco.cep}`;
+                        
+                        // Preencher o campo de endereço
+                        const enderecoInput = document.getElementById('endereco');
+                        if (enderecoInput) {
+                            enderecoInput.value = enderecoCompleto;
+                        }
+                    }
+                })
+                .catch(error => {
+                    // Remover indicador de carregamento
+                    if (loadingDiv.parentNode) {
+                        loadingDiv.parentNode.removeChild(loadingDiv);
+                    }
+                    
+                    console.error('Erro ao consultar CEP:', error);
+                    alert('Erro ao consultar o CEP. Tente novamente mais tarde.');
+                });
+        });
+    });
 }
 
 /**
@@ -195,4 +272,16 @@ function validatePhone(phone) {
     const phoneDigits = phone.replace(/\D/g, '');
     // Verifica se tem pelo menos 10 dígitos (DDD + número)
     return phoneDigits.length >= 10;
+}
+
+/**
+ * Validar formato de CEP
+ * @param {string} cep - O CEP a ser validado
+ * @returns {boolean} - Verdadeiro se o CEP for válido
+ */
+function validateCep(cep) {
+    // Remove tudo o que não for dígito
+    const cepDigits = cep.replace(/\D/g, '');
+    // Verifica se tem 8 dígitos
+    return cepDigits.length === 8;
 }
