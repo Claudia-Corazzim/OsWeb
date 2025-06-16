@@ -151,10 +151,10 @@
                         <td>{{ os['veiculo'] or '-' }}</td>
                         <td>{{ os['placa'] or '-' }}</td>
                         <td>{{ os['descricao'] }}</td>
-                        <td>{{ os['data'] }}</td>
-                        <td class="actions">
+                        <td>{{ os['data'] }}</td>                        <td class="actions">
                             <a href="{{ url_for('editar_os', id=os['id']) }}">Editar</a>
                             <a href="{{ url_for('excluir_os', id=os['id']) }}" class="delete">Excluir</a>
+                            <a href="{{ url_for('gerar_pdf_os', id=os['id']) }}" target="_blank" style="background-color: #FF9800;">PDF</a>
                         </td>
                     </tr>
                     {% endfor %}

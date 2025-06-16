@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordem de Serviço #{{ ordem.id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pdf_style.css') }}">
+</head>
+<body>    <div class="header">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo da Empresa" class="logo">
+        <div class="company-info">
+            <div class="company-name">Auto Serviços</div>
+            <p>Rua Exemplo, 123 - Centro - Cidade/UF</p>
+            <p>Tel: (00) 9999-9999 | E-mail: contato@autoservicos.com</p>
+            <p>CNPJ: 00.000.000/0001-00</p>
+        </div>
+    </div>
+
+    <h1>ORDEM DE SERVIÇO Nº {{ ordem.id }}</h1>
+
+    <div class="order-info">
+        <p><strong>Data:</strong> {{ ordem.data }}</p>
+        <p><strong>Veículo:</strong> {{ ordem.veiculo or 'Não informado' }}</p>
+        <p><strong>Placa:</strong> {{ ordem.placa or 'Não informada' }}</p>
+    </div>
+
+    <div class="client-info">
+        <h2>Dados do Cliente</h2>
+        <p><strong>Nome:</strong> {{ cliente.nome }}</p>
+        <p><strong>Telefone:</strong> {{ cliente.telefone }}</p>
+        <p><strong>E-mail:</strong> {{ cliente.email }}</p>
+        <p><strong>Endereço:</strong> {{ cliente.endereco }}</p>
+    </div>
+
+    <div class="service-description">
+        <h2>Descrição do Serviço</h2>
+        <p>{{ ordem.descricao }}</p>
+    </div>
+
+    <div class="signatures">
+        <div class="signature">
+            <p>Assinatura do Cliente</p>
+        </div>
+        <div class="signature">
+            <p>Assinatura do Responsável</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Este documento é uma ordem de serviço e não tem valor fiscal.</p>
+        <p>Data de emissão: {{ data_emissao }}</p>
+    </div>
+</body>
+</html>

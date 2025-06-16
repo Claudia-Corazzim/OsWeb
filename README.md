@@ -101,3 +101,9 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ---
 
 Desenvolvido por [Claudia Corazzim](https://github.com/Claudia-Corazzim)
+
+
+# GitHub
+- cd "c:\Users\claud\OneDrive\Desktop\OSweb" && git status
+- cd "c:\Users\claud\OneDrive\Desktop\OSweb" && git commit -m "Adiciona mensagem de alteração"
+- cd "c:\Users\claud\OneDrive\Desktop\OSweb" && git push origin master

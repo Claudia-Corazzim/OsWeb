@@ -1,5 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, make_response, send_file
 import sqlite3
+from datetime import datetime
+from fpdf import FPDF
+import os
+import tempfile
 
 app = Flask(__name__)
 
@@ -199,6 +203,103 @@ def excluir_os(id):
     conn.commit()
     conn.close()
     return redirect(url_for('ordens_servico'))
+
+@app.route('/gerar_pdf_os/<int:id>')
+def gerar_pdf_os(id):
+    conn = get_db_connection()
+    
+    # Buscar dados da ordem de serviço e do cliente
+    ordem = conn.execute('SELECT * FROM ordens_servico WHERE id = ?', (id,)).fetchone()
+    if not ordem:
+        conn.close()
+        return "Ordem de serviço não encontrada", 404
+        
+    cliente = conn.execute('SELECT * FROM clientes WHERE id = ?', (ordem['cliente_id'],)).fetchone()
+    conn.close()
+      # Criar o PDF
+    class PDF(FPDF):
+        def header(self):
+            # Logo
+            logo_path = os.path.join(app.root_path, 'static', 'img', 'logo.png')
+            if os.path.exists(logo_path):
+                self.image(logo_path, 10, 8, 33)
+                
+            # Informações da empresa
+            self.set_font('Arial', 'B', 15)
+            self.cell(0, 10, 'Sergio Eduardo Padilha Corazzim', 0, 1, 'C')
+            self.set_font('Arial', '', 10)
+            self.cell(0, 5, 'Avenida Pedro Botesi, 2352 - Jd Scomparim - Mogi Mirim - SP', 0, 1, 'C')
+              # WhatsApp com ícone
+            whatsapp_icon = os.path.join(app.root_path, 'static', 'img', 'whatsapp.svg')
+            if os.path.exists(whatsapp_icon):
+                # Centralizar texto com ícone
+                self.cell(0, 5, 'WhatsApp: (19) 99676-0164', 0, 1, 'C')
+                self.image(whatsapp_icon, 85, self.get_y() - 10, 5)  # Adiciona ícone acima do texto
+            else:# Fallback sem ícone
+                self.cell(0, 5, 'WhatsApp: (19) 99676-0164', 0, 1, 'C')
+                
+            self.cell(0, 5, 'CNPJ: 08.101.093/0001-52', 0, 1, 'C')
+            self.ln(10)
+    
+    # Instanciar PDF
+    pdf = PDF()
+    pdf.add_page()
+    
+    # Título
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(0, 10, f'ORDEM DE SERVIÇO Nº {ordem["id"]}', 0, 1, 'C')
+    pdf.ln(5)
+    
+    # Informações da ordem
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Informações da Ordem de Serviço', 0, 1)
+    pdf.set_font('Arial', '', 11)
+    pdf.cell(0, 8, f'Data: {ordem["data"]}', 0, 1)
+    pdf.cell(0, 8, f'Veículo: {ordem["veiculo"] or "Não informado"}', 0, 1)
+    pdf.cell(0, 8, f'Placa: {ordem["placa"] or "Não informada"}', 0, 1)
+    pdf.ln(5)
+    
+    # Informações do cliente
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Dados do Cliente', 0, 1)
+    pdf.set_font('Arial', '', 11)
+    pdf.cell(0, 8, f'Nome: {cliente["nome"]}', 0, 1)
+    pdf.cell(0, 8, f'Telefone: {cliente["telefone"]}', 0, 1)
+    pdf.cell(0, 8, f'E-mail: {cliente["email"]}', 0, 1)
+    pdf.cell(0, 8, f'Endereço: {cliente["endereco"]}', 0, 1)
+    pdf.ln(5)
+    
+    # Descrição do serviço
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 10, 'Descrição do Serviço', 0, 1)
+    pdf.set_font('Arial', '', 11)
+    
+    # Quebrar texto longo em linhas
+    descricao_text = ordem["descricao"]
+    pdf.multi_cell(0, 8, descricao_text)
+    pdf.ln(20)
+    
+    # Assinaturas
+    pdf.cell(90, 10, '_______________________________', 0, 0, 'C')
+    pdf.cell(90, 10, '_______________________________', 0, 1, 'C')
+    pdf.cell(90, 5, 'Assinatura do Cliente', 0, 0, 'C')
+    pdf.cell(90, 5, 'Assinatura do Responsável', 0, 1, 'C')
+    
+    # Rodapé
+    pdf.ln(15)
+    pdf.set_font('Arial', 'I', 8)
+    pdf.cell(0, 5, 'Este documento é uma ordem de serviço e não tem valor fiscal.', 0, 1, 'C')
+    pdf.cell(0, 5, f'Data de emissão: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}', 0, 1, 'C')
+    
+    # Salvar o PDF em um arquivo temporário
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+    pdf_path = temp_file.name
+    temp_file.close()
+    
+    pdf.output(pdf_path)
+    
+    # Enviar o arquivo para o usuário
+    return send_file(pdf_path, as_attachment=True, download_name=f'ordem_servico_{ordem["id"]}.pdf')
 
 # ---------- ROTAS DE ESTOQUE ----------
 @app.route('/estoque', methods=['GET', 'POST'])
