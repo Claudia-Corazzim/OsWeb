@@ -216,7 +216,8 @@ def gerar_pdf_os(id):
         
     cliente = conn.execute('SELECT * FROM clientes WHERE id = ?', (ordem['cliente_id'],)).fetchone()
     conn.close()
-      # Criar o PDF
+    
+    # Criar o PDF
     class PDF(FPDF):
         def header(self):
             # Logo
@@ -229,15 +230,7 @@ def gerar_pdf_os(id):
             self.cell(0, 10, 'Sergio Eduardo Padilha Corazzim', 0, 1, 'C')
             self.set_font('Arial', '', 10)
             self.cell(0, 5, 'Avenida Pedro Botesi, 2352 - Jd Scomparim - Mogi Mirim - SP', 0, 1, 'C')
-              # WhatsApp com ícone
-            whatsapp_icon = os.path.join(app.root_path, 'static', 'img', 'whatsapp.svg')
-            if os.path.exists(whatsapp_icon):
-                # Centralizar texto com ícone
-                self.cell(0, 5, 'WhatsApp: (19) 99676-0164', 0, 1, 'C')
-                self.image(whatsapp_icon, 85, self.get_y() - 10, 5)  # Adiciona ícone acima do texto
-            else:# Fallback sem ícone
-                self.cell(0, 5, 'WhatsApp: (19) 99676-0164', 0, 1, 'C')
-                
+            self.cell(0, 5, 'WhatsApp: (19) 99676-0164', 0, 1, 'C')
             self.cell(0, 5, 'CNPJ: 08.101.093/0001-52', 0, 1, 'C')
             self.ln(10)
     
