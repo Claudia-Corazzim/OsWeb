@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ordens de Serviço</title>
+    <!-- CSS personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -157,9 +158,11 @@
                             <a href="{{ url_for('gerar_pdf_os', id=os['id']) }}" target="_blank" style="background-color: #FF9800;">PDF</a>
                         </td>
                     </tr>
-                    {% endfor %}
-                </tbody>
+                    {% endfor %}                </tbody>
             </table>
     </div>
+    
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

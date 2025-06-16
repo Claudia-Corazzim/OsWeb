@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Cliente</title>
+    <!-- CSS personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -90,10 +91,12 @@
             
             <label for="endereco">Endereço:</label>
             <input type="text" id="endereco" name="endereco" value="{{ cliente['endereco'] }}" required>
-            
-            <input type="submit" value="Salvar Alterações">
+              <input type="submit" value="Salvar Alterações">
             <a href="{{ url_for('clientes') }}" class="btn-cancel">Cancelar</a>
         </form>
     </div>
+    
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

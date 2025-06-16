@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estoque</title>
-    <!-- CSS personalizado -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Gestão{% endblock %}</title>
+    <!-- CSS comum a todas as páginas -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -40,7 +40,12 @@
             margin-bottom: 20px;
         }
         input[type="text"], 
-        input[type="number"] {
+        input[type="tel"],
+        input[type="email"],
+        input[type="number"],
+        input[type="date"],
+        select,
+        textarea {
             width: 100%;
             padding: 8px;
             margin: 5px 0 15px;
@@ -87,10 +92,13 @@
             background-color: #f44336;
         }
     </style>
+    <!-- CSS personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <div class="container">
-        <h1>Controle de Estoque</h1>
+        <h1>{% block header %}Sistema de Gestão{% endblock %}</h1>
         
         <div class="nav">
             <a href="{{ url_for('clientes') }}">Clientes</a>
@@ -98,45 +106,11 @@
             <a href="{{ url_for('estoque') }}">Estoque</a>
         </div>
 
-        <h2>Adicionar Item ao Estoque</h2>        <form action="{{ url_for('adicionar_peca') }}" method="post">
-            <label for="nome">Nome da Peça:</label>
-            <input type="text" id="nome" name="nome" required>
-            
-            <label for="quantidade">Quantidade:</label>
-            <input type="number" id="quantidade" name="quantidade" min="1" required>
-            
-            <label for="valor">Valor da Peça (R$):</label>
-            <input type="number" id="valor" name="valor" min="0" step="0.01" required>
-            
-            <input type="submit" value="Adicionar">
-        </form>
-
-        <h2>Lista de Itens</h2>
-        <table>
-            <thead>                <tr>
-                    <th>ID</th>
-                    <th>Nome da Peça</th>
-                    <th>Quantidade</th>
-                    <th>Valor (R$)</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for peca in pecas %}
-                <tr>                    <td>{{ peca['id'] }}</td>
-                    <td>{{ peca['nome'] }}</td>
-                    <td>{{ peca['quantidade'] }}</td>
-                    <td>{{ peca['valor'] if peca['valor'] else '0.00' }}</td>
-                    <td class="actions">
-                        <a href="{{ url_for('editar_peca', id=peca['id']) }}">Editar</a>
-                        <a href="{{ url_for('excluir_peca', id=peca['id']) }}" class="delete">Excluir</a>
-                    </td>
-                </tr>
-                {% endfor %}            </tbody>
-        </table>
+        {% block content %}{% endblock %}
     </div>
-    
+
     <!-- JavaScript -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
