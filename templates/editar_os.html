@@ -88,9 +88,14 @@
                 </option>
                 {% endfor %}
             </select>
-            
-            <label for="descricao">Descrição do Serviço:</label>
+              <label for="descricao">Descrição do Serviço:</label>
             <textarea id="descricao" name="descricao" rows="4" required>{{ ordem['descricao'] }}</textarea>
+            
+            <label for="veiculo">Veículo:</label>
+            <input type="text" id="veiculo" name="veiculo" value="{{ ordem['veiculo'] or '' }}" placeholder="Marca e modelo do veículo">
+            
+            <label for="placa">Placa:</label>
+            <input type="text" id="placa" name="placa" value="{{ ordem['placa'] or '' }}" placeholder="Placa do veículo">
             
             <label for="data">Data:</label>
             <input type="date" id="data" name="data" value="{{ ordem['data'] }}" required>

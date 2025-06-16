@@ -116,9 +116,14 @@
                     <option value="{{ cliente['id'] }}">{{ cliente['nome'] }}</option>
                     {% endfor %}
                 </select>
-                
-                <label for="descricao">Descrição do Serviço:</label>
+                  <label for="descricao">Descrição do Serviço:</label>
                 <textarea id="descricao" name="descricao" rows="4" required></textarea>
+                
+                <label for="veiculo">Veículo:</label>
+                <input type="text" id="veiculo" name="veiculo" placeholder="Marca e modelo do veículo">
+                
+                <label for="placa">Placa:</label>
+                <input type="text" id="placa" name="placa" placeholder="Placa do veículo">
                 
                 <label for="data">Data:</label>
                 <input type="date" id="data" name="data" required>
@@ -127,11 +132,12 @@
             </form>
 
             <h2>Lista de Ordens de Serviços</h2>
-            <table>
-                <thead>
+            <table>                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Cliente</th>
+                        <th>Veículo</th>
+                        <th>Placa</th>
                         <th>Descrição</th>
                         <th>Data</th>
                         <th>Ações</th>
@@ -142,6 +148,8 @@
                     <tr>
                         <td>{{ os['id'] }}</td>
                         <td>{{ os['cliente'] }}</td>
+                        <td>{{ os['veiculo'] or '-' }}</td>
+                        <td>{{ os['placa'] or '-' }}</td>
                         <td>{{ os['descricao'] }}</td>
                         <td>{{ os['data'] }}</td>
                         <td class="actions">
