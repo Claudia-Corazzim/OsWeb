@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gestão de Ordens de Serviço - Cadastro e visualização">
     <title>Ordens de Serviço</title>
     <!-- CSS personalizado -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
@@ -94,85 +96,117 @@
             display: inline-block;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box;
-        }
+            box-sizing: border-box;        }
     </style>
 </head>
 <body>
+    <!-- Skip link para acessibilidade -->
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+    
     <div class="container">
-            <h1>Ordem de Serviço</h1>
+            <h1 id="main-content" tabindex="-1">Ordem de Serviço</h1>
             
-            <div class="nav">
-                <a href="{{ url_for('clientes') }}">Clientes</a>
-                <a href="{{ url_for('ordens_servico') }}">Ordens de Serviço</a>
-                <a href="{{ url_for('estoque') }}">Estoque</a>
-            </div>
-
-            <h2>Adicionar OS</h2>
-            <form action="{{ url_for('adicionar_os') }}" method="post">
-                <label for="cliente_id">Cliente:</label>
-                <select id="cliente_id" name="cliente_id" required>
-                    <option value="">Selecione um cliente</option>
-                    {% for cliente in clientes %}
-                    <option value="{{ cliente['id'] }}">{{ cliente['nome'] }}</option>
-                    {% endfor %}
-                </select>                <label for="veiculo">Veículo:</label>
-                <input type="text" id="veiculo" name="veiculo" placeholder="Marca e modelo do veículo">
+            <nav aria-label="Navegação principal">
+                <div class="nav">
+                    <a href="{{ url_for('clientes') }}" aria-label="Ir para Clientes">Clientes</a>
+                    <a href="{{ url_for('ordens_servico') }}" aria-label="Ir para Ordens de Serviço">Ordens de Serviço</a>
+                    <a href="{{ url_for('estoque') }}" aria-label="Ir para Estoque">Estoque</a>
+                </div>
+            </nav>            <h2>Adicionar OS</h2>
+            <form action="{{ url_for('adicionar_os') }}" method="post" aria-labelledby="formTitle">
+                <h3 id="formTitle" class="sr-only">Formulário de Nova Ordem de Serviço</h3>
                 
-                <label for="placa">Placa:</label>
-                <input type="text" id="placa" name="placa" placeholder="Placa do veículo">
+                <div class="form-group">
+                    <label for="cliente_id">Cliente:</label>
+                    <select id="cliente_id" name="cliente_id" required aria-required="true">
+                        <option value="">Selecione um cliente</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente['id'] }}">{{ cliente['nome'] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 
-                <label for="data">Data:</label>
-                <input type="date" id="data" name="data" required>
-
-                <!-- Serviços -->
-                <div class="servicos-container">
-                    <label>Serviços:</label>
-                    <small class="form-text text-muted" style="display: block; margin-bottom: 10px; color: #666;">
-                        Digite a descrição e o valor na mesma linha. Ex: "1 tampa - R$ 30,00"
-                    </small>
-                    <div id="servicosContainer">
+                <div class="form-group">
+                    <label for="veiculo">Veículo:</label>
+                    <input type="text" id="veiculo" name="veiculo" placeholder="Marca e modelo do veículo" aria-describedby="veiculoHint">
+                    <span id="veiculoHint" class="sr-only">Informe a marca e modelo do veículo</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="placa">Placa:</label>
+                    <input type="text" id="placa" name="placa" placeholder="Placa do veículo" aria-describedby="placaHint">
+                    <span id="placaHint" class="sr-only">Informe a placa do veículo no formato AAA-0000 ou AAA0A00</span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="data">Data:</label>
+                    <input type="date" id="data" name="data" required aria-required="true" value="{{ today }}">
+                </div>                <!-- Serviços -->
+                <fieldset class="servicos-container">
+                    <legend>Serviços</legend>
+                    <div class="hint" aria-live="polite">
+                        <small class="form-text text-muted" style="display: block; margin-bottom: 10px; color: #666;">
+                            Digite a descrição e o valor na mesma linha. Ex: "1 tampa - R$ 30,00"
+                        </small>
+                    </div>
+                    <div id="servicosContainer" role="region" aria-label="Lista de serviços">
                         <div class="servico-item" style="display: flex; margin-bottom: 10px;">
-                            <input type="text" name="descricoes[]" placeholder="Ex: 1 tampa - R$ 30,00" required style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                            <button type="button" class="btn-remover-servico" style="background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 8px 15px; margin-left: 5px;">X</button>
+                            <input type="text" name="descricoes[]" placeholder="Ex: 1 tampa - R$ 30,00" required 
+                                   style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
+                                   aria-label="Descrição do serviço e valor"
+                                   aria-describedby="servicoHint">
+                            <button type="button" class="btn-remover-servico" 
+                                    style="background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 8px 15px; margin-left: 5px;"
+                                    aria-label="Remover este serviço">X</button>
                         </div>
                     </div>
-                    <button type="button" id="btnAdicionarServico" style="background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 10px 15px; margin: 10px 0;">Adicionar Serviço</button>
+                    <div id="servicoHint" class="sr-only">Digite a descrição do serviço seguida do valor, como no exemplo</div>
+                    <button type="button" id="btnAdicionarServico" 
+                            style="background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 10px 15px; margin: 10px 0;"
+                            aria-label="Adicionar mais um serviço">Adicionar Serviço</button>
+                </fieldset>
+
+                <div class="form-group">
+                    <label for="observacoes">Observações:</label>
+                    <textarea id="observacoes" name="observacoes" rows="4" placeholder="Observações adicionais sobre o serviço" aria-label="Observações sobre a ordem de serviço"></textarea>
                 </div>
-
-                <label for="observacoes">Observações:</label>
-                <textarea id="observacoes" name="observacoes" rows="4" placeholder="Observações adicionais sobre o serviço"></textarea>
                 
-                <input type="submit" value="Adicionar">
-            </form>
-
-            <h2>Lista de Ordens de Serviços</h2>
-            <table>                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Cliente</th>
-                        <th>Veículo</th>
-                        <th>Placa</th>                        <th>Data</th>
-                        <th>Observações</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for os in os_list %}
+                <button type="submit" class="submit-btn" style="background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer;">Adicionar Ordem de Serviço</button>
+            </form>            <h2 id="listaOS">Lista de Ordens de Serviços</h2>
+            <div class="table-responsive" role="region" aria-labelledby="listaOS" tabindex="0">
+                <table aria-label="Lista de ordens de serviço">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Cliente</th>
+                            <th scope="col">Veículo</th>
+                            <th scope="col">Placa</th>
+                            <th scope="col">Data</th>
+                            <th scope="col">Observações</th>
+                            <th scope="col">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>                    {% for os in os_list %}
                     <tr>
                         <td>{{ os['id'] }}</td>
                         <td>{{ os['cliente'] }}</td>
                         <td>{{ os['veiculo'] or '-' }}</td>
-                        <td>{{ os['placa'] or '-' }}</td>                        <td>{{ os['data'] }}</td>
+                        <td>{{ os['placa'] or '-' }}</td>
+                        <td>{{ os['data'] }}</td>
                         <td>{{ os['observacoes'] or '-' }}</td>
                         <td class="actions">
-                            <a href="{{ url_for('editar_os', id=os['id']) }}">Editar</a>
-                            <a href="{{ url_for('excluir_os', id=os['id']) }}" class="delete">Excluir</a>
-                            <a href="{{ url_for('gerar_pdf_os', id=os['id']) }}" target="_blank" style="background-color: #FF9800;">PDF</a>
+                            <a href="{{ url_for('editar_os', id=os['id']) }}" aria-label="Editar ordem de serviço {{ os['id'] }}">Editar</a>
+                            <a href="{{ url_for('excluir_os', id=os['id']) }}" class="delete" 
+                               aria-label="Excluir ordem de serviço {{ os['id'] }}"
+                               onclick="return confirm('Tem certeza que deseja excluir esta ordem de serviço?');">Excluir</a>
+                            <a href="{{ url_for('gerar_pdf_os', id=os['id']) }}" target="_blank" 
+                               style="background-color: #FF9800;"
+                               aria-label="Gerar PDF da ordem de serviço {{ os['id'] }}">PDF</a>
                         </td>
                     </tr>
                     {% endfor %}                </tbody>
             </table>
+            </div>
     </div>
       <!-- JavaScript -->
     <script>
@@ -185,8 +219,12 @@
                 div.className = 'servico-item';
                 div.style.cssText = 'display: flex; margin-bottom: 10px;';
                 div.innerHTML = `
-                    <input type="text" name="descricoes[]" placeholder="Ex: 1 tampa - R$ 30,00" required style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    <button type="button" class="btn-remover-servico" style="background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 8px 15px; margin-left: 5px;">X</button>
+                    <input type="text" name="descricoes[]" placeholder="Ex: 1 tampa - R$ 30,00" required 
+                           style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
+                           aria-label="Descrição do serviço e valor">
+                    <button type="button" class="btn-remover-servico" 
+                            style="background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 8px 15px; margin-left: 5px;"
+                            aria-label="Remover este serviço">X</button>
                 `;
                 return div;
             }
@@ -194,16 +232,52 @@
             btnAdicionarServico.addEventListener('click', function() {
                 const novaLinha = criarLinhaServico();
                 servicosContainer.appendChild(novaLinha);
+                // Anunciar para leitores de tela
+                const anuncio = document.createElement('div');
+                anuncio.setAttribute('role', 'status');
+                anuncio.setAttribute('aria-live', 'polite');
+                anuncio.classList.add('sr-only');
+                anuncio.textContent = 'Novo campo de serviço adicionado';
+                document.body.appendChild(anuncio);
+                setTimeout(function() {
+                    document.body.removeChild(anuncio);
+                }, 1000);
             });
 
             servicosContainer.addEventListener('click', function(e) {
                 if (e.target.classList.contains('btn-remover-servico')) {
                     if (document.querySelectorAll('.servico-item').length > 1) {
-                        e.target.closest('.servico-item').remove();
+                        const item = e.target.closest('.servico-item');
+                        item.style.opacity = '0.5';
+                        setTimeout(function() {
+                            item.remove();
+                            // Anunciar para leitores de tela
+                            const anuncio = document.createElement('div');
+                            anuncio.setAttribute('role', 'status');
+                            anuncio.setAttribute('aria-live', 'polite');
+                            anuncio.classList.add('sr-only');
+                            anuncio.textContent = 'Campo de serviço removido';
+                            document.body.appendChild(anuncio);
+                            setTimeout(function() {
+                                document.body.removeChild(anuncio);
+                            }, 1000);
+                        }, 200);
                     } else {
                         alert('É necessário ter pelo menos um serviço');
                     }
                 }
+            });
+            
+            // Adicionar suporte a teclado
+            document.querySelectorAll('a, button, input, select, textarea').forEach(function(el) {
+                el.addEventListener('keydown', function(e) {
+                    // Pressionar Enter ou Espaço em botões
+                    if ((e.key === 'Enter' || e.key === ' ') && 
+                        (this.tagName === 'BUTTON' || this.getAttribute('role') === 'button')) {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
             });
         });
     </script>
