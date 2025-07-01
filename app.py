@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response, send_file
+from flask import Flask, render_template, request, redirect, url_for, make_response, send_file, jsonify
 import psycopg2
 from psycopg2.extras import DictCursor
 from datetime import datetime
@@ -584,6 +584,36 @@ def extrair_valor_de_descricao(descricao):
         except ValueError:
             return 0.0
     return 0.0
+
+# ---------- API ENDPOINTS ----------
+@app.route('/api/clientes', methods=['GET'])
+def api_clientes():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM clientes')
+    clientes = cursor.fetchall()
+    conn.close()
+    return jsonify([dict(cliente) for cliente in clientes])
+
+@app.route('/api/os/<int:id>', methods=['GET'])
+def api_ordem_servico(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM ordens_servico WHERE id = %s', (id,))
+    ordem = cursor.fetchone()
+    conn.close()
+    if ordem is None:
+        return jsonify({'error': 'Ordem de serviço não encontrada'}), 404
+    return jsonify(dict(ordem))
+
+@app.route('/api/estoque', methods=['GET'])
+def api_estoque():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM pecas')
+    pecas = cursor.fetchall()
+    conn.close()
+    return jsonify([dict(peca) for peca in pecas])
 
 # Executar o app
 if __name__ == '__main__':

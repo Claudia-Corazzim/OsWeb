@@ -5,29 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Sistema de Gestão de Ordens de Serviço e Controle de Estoque">
     <title>{% block title %}Sistema de Gestão{% endblock %}</title>
+    <!-- CSS de acessibilidade -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
     <!-- Skip link para acessibilidade -->
-    <style>
-        .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 0;
-            background: #000;
-            color: white;
-            padding: 8px;
-            z-index: 100;
-            transition: top 0.3s;
-        }
-        
-        .skip-link:focus {
-            top: 0;
-        }
-        
-        /* Indicador de foco para acessibilidade */
-        a:focus, button:focus, input:focus, select:focus, textarea:focus {
-            outline: 3px solid #4CAF50 !important;
-            outline-offset: 2px;
-        }
-    </style>
+    <a href="#conteudo-principal" class="skip-link">Pular para o conteúdo principal</a>
     <!-- CSS comum a todas as páginas -->
     <style>
         body {
@@ -147,54 +128,41 @@
         p, li {
             line-height: 1.5;
         }    </style>
-    <!-- CSS personalizado -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
-    <!-- CSS de acessibilidade -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}">
-    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Skip link para acessibilidade -->
-    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
-    
-    <div class="container">
-        <header>
-            <h1 id="main-content" tabindex="-1">{% block header %}Sistema de Gestão{% endblock %}</h1>
-            
-            <nav aria-label="Navegação principal">
-                <div class="nav">
-                    <a href="{{ url_for('clientes') }}" aria-label="Ir para Clientes">Clientes</a>
-                    <a href="{{ url_for('ordens_servico') }}" aria-label="Ir para Ordens de Serviço">Ordens de Serviço</a>
-                    <a href="{{ url_for('estoque') }}" aria-label="Ir para Estoque">Estoque</a>
-                </div>
-            </nav>
-        </header>
+    <header role="banner">
+        <nav role="navigation" aria-label="Menu principal">
+            <div class="nav">
+                <a href="{{ url_for('home') }}" aria-label="Página inicial">Início</a>
+                <a href="{{ url_for('clientes') }}" aria-label="Gerenciar clientes">Clientes</a>
+                <a href="{{ url_for('ordens_servico') }}" aria-label="Gerenciar ordens de serviço">Ordens de Serviço</a>
+                <a href="{{ url_for('estoque') }}" aria-label="Gerenciar estoque">Estoque</a>
+            </div>
+        </nav>
+    </header>
 
-        <main>
+    <main id="conteudo-principal" role="main">
+        <div class="container">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div role="alert" aria-live="polite" class="mensagens">
+                        {% for message in messages %}
+                            <div class="mensagem">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
             {% block content %}{% endblock %}
-        </main>
-    </div>
+        </div>
+    </main>
 
-    <!-- JavaScript -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    {% block extra_js %}{% endblock %}
-    
-    <!-- Script de acessibilidade -->
-    <script>
-        // Adiciona roles e atributos ARIA a elementos dinâmicos
-        document.addEventListener('DOMContentLoaded', function() {
-            // Adiciona role="button" a elementos que parecem botões
-            document.querySelectorAll('.btn, button, [type="button"]').forEach(function(el) {
-                if (!el.hasAttribute('role')) {
-                    el.setAttribute('role', 'button');
-                }
-            });
-            
-            // Verifica se há mensagens de erro
-            document.querySelectorAll('.error, .alert').forEach(function(el) {
-                el.setAttribute('role', 'alert');
-            });
-        });
-    </script>
+    <footer role="contentinfo">
+        <p>&copy; 2024 Sistema de Gestão</p>
+    </footer>
+
+    <!-- JavaScript de validação e acessibilidade -->
+    <script src="{{ url_for('static', filename='js/validation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}"></script>
 </body>
 </html>

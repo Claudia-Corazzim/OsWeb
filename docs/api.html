@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentação da API - Sistema de Gestão</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .endpoint {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .method {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .get { background-color: #61affe; color: white; }
+        .post { background-color: #49cc90; color: white; }
+        .put { background-color: #fca130; color: white; }
+        .delete { background-color: #f93e3e; color: white; }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Documentação da API</h1>
+    
+    <div class="endpoint">
+        <h2>Clientes</h2>
+        <div>
+            <span class="method get">GET</span>
+            <code>/api/clientes</code>
+        </div>
+        <p>Retorna a lista de todos os clientes cadastrados.</p>
+        <h4>Exemplo de resposta:</h4>
+        <pre>
+[
+    {
+        "id": 1,
+        "nome": "João Silva",
+        "telefone": "(11) 99999-9999",
+        "email": "joao@email.com"
+    }
+]</pre>
+    </div>
+
+    <div class="endpoint">
+        <h2>Ordens de Serviço</h2>
+        <div>
+            <span class="method get">GET</span>
+            <code>/api/ordens</code>
+        </div>
+        <p>Retorna todas as ordens de serviço.</p>
+        
+        <div style="margin-top: 15px;">
+            <span class="method get">GET</span>
+            <code>/api/ordens/&lt;id&gt;</code>
+        </div>
+        <p>Retorna uma ordem de serviço específica.</p>
+        <h4>Exemplo de resposta:</h4>
+        <pre>
+{
+    "id": 1,
+    "cliente_nome": "João Silva",
+    "data": "2024-01-20",
+    "status": "Em andamento",
+    "servicos": ["Troca de peça", "Manutenção"],
+    "valores": [100.00, 50.00]
+}</pre>
+    </div>
+
+    <div class="endpoint">
+        <h2>Estoque</h2>
+        <div>
+            <span class="method get">GET</span>
+            <code>/api/estoque</code>
+        </div>
+        <p>Retorna todos os itens do estoque.</p>
+        <h4>Exemplo de resposta:</h4>
+        <pre>
+[
+    {
+        "id": 1,
+        "descricao": "Peça XYZ",
+        "quantidade": 10,
+        "valor": 50.00
+    }
+]</pre>
+    </div>
+
+    <h2>Autenticação</h2>
+    <p>Atualmente, a API é de acesso público para fins de demonstração. Em um ambiente de produção, seria necessário implementar autenticação.</p>
+
+    <h2>Tratamento de Erros</h2>
+    <p>A API retorna os seguintes códigos de status:</p>
+    <ul>
+        <li>200: Sucesso</li>
+        <li>404: Recurso não encontrado</li>
+        <li>500: Erro interno do servidor</li>
+    </ul>
+</body>
+</html>
