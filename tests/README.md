@@ -1,3 +1,5 @@
+# software com framework web que utilize banco de dados , inclua script web (Javascript), nuvem, uso de API, acessibilidade, controle de versão e testes
+
 # Guia de Execução de Testes - OSweb
 
 Este guia descreve como executar os testes automatizados e manuais para o sistema OSweb.

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response, send_file
-import sqlite3
+import psycopg2
+from psycopg2.extras import DictCursor
 from datetime import datetime
 from fpdf import FPDF
 import os
@@ -15,96 +16,69 @@ app = Flask(__name__)
 init_api(app)
 
 def get_db_connection():
-    conn = sqlite3.connect('banco.db')
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(
+        dbname="osweb",
+        user="admin",
+        password="admin",
+        host="localhost",
+        port="5432"
+    )
+    conn.cursor_factory = DictCursor
     return conn
 
 # Criação das tabelas (clientes, ordens, peças)
 def criar_tabelas():
-    conn = get_db_connection()    
-    
-    # Verificar se é necessário atualizar a tabela de clientes
-    try:
-        # Verifica se as colunas email e endereco existem
-        conn.execute('SELECT email, endereco FROM clientes LIMIT 1')
-    except sqlite3.OperationalError:
-        # Se não existir, cria uma nova tabela com as colunas
-        conn.execute('DROP TABLE IF EXISTS clientes')
-        conn.execute('''
-            CREATE TABLE clientes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                telefone TEXT,
-                email TEXT,
-                endereco TEXT
-            );
-        ''')
-    else:
-        # Se já existir, não faz nada
-        pass
-          # Verificar se é necessário atualizar a tabela de ordens de serviço
-    try:
-        # Verifica se as colunas veiculo, placa e valor existem
-        conn.execute('SELECT veiculo, placa, valor FROM ordens_servico LIMIT 1')
-    except sqlite3.OperationalError:# Se não existir, cria uma nova tabela com as colunas
-        conn.execute('DROP TABLE IF EXISTS ordens_servico')
-        conn.execute('''
-            CREATE TABLE ordens_servico (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                cliente_id INTEGER NOT NULL,
-                descricao TEXT NOT NULL,
-                data TEXT NOT NULL,
-                veiculo TEXT,
-                placa TEXT,
-                FOREIGN KEY (cliente_id) REFERENCES clientes (id)
-            );
-        ''')
-    else:
-        # Se já existir, não faz nada
-        pass
-        
-    # Verificar se é necessário atualizar a tabela de peças
-    try:
-        # Verifica se a coluna valor_instalado existe
-        conn.execute('SELECT valor_instalado FROM pecas LIMIT 1')
-    except sqlite3.OperationalError:
-        # Se a coluna valor_instalado não existir, adiciona-a
-        try:
-            conn.execute('ALTER TABLE pecas ADD COLUMN valor_instalado REAL')
-            print("Coluna valor_instalado adicionada com sucesso à tabela pecas")
-        except sqlite3.OperationalError as e:
-            # Se houver um erro na alteração, recria a tabela
-            print(f"Erro ao adicionar coluna: {e}. Recriando tabela...")
-            conn.execute('DROP TABLE IF EXISTS pecas')
-            conn.execute('''
-                CREATE TABLE pecas (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    nome TEXT NOT NULL,
-                    quantidade INTEGER NOT NULL,
-                    valor REAL,
-                    valor_instalado REAL
-                );
-            ''')
-            print("Tabela pecas recriada com sucesso!")
-    else:
-        # Se a coluna valor_instalado já existir, não faz nada
-        pass
-
-    conn.commit()
-    conn.close()
-
-# Criar a tabela de serviços se não existir
-def criar_tabela_servicos():
     conn = get_db_connection()
-    conn.execute('''
+    cursor = conn.cursor()
+    
+    # Criar a tabela de clientes se não existir
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS clientes (
+            id SERIAL PRIMARY KEY,
+            nome TEXT NOT NULL,
+            telefone TEXT,
+            email TEXT,
+            endereco TEXT
+        );
+    ''')
+    
+    # Criar a tabela de ordens de serviço se não existir
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS ordens_servico (
+            id SERIAL PRIMARY KEY,
+            cliente_id INTEGER NOT NULL,
+            descricao TEXT NOT NULL,
+            data TEXT NOT NULL,
+            veiculo TEXT,
+            placa TEXT,
+            valor NUMERIC DEFAULT 0,
+            observacoes TEXT,
+            FOREIGN KEY (cliente_id) REFERENCES clientes (id)
+        );
+    ''')
+    
+    # Criar a tabela de peças se não existir
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS pecas (
+            id SERIAL PRIMARY KEY,
+            nome TEXT NOT NULL,
+            quantidade INTEGER NOT NULL,
+            valor NUMERIC,
+            valor_instalado NUMERIC
+        );
+    ''')
+    
+    # Criar a tabela de serviços se não existir
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS servicos_os (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             ordem_servico_id INTEGER NOT NULL,
             descricao TEXT NOT NULL,
-            valor REAL NOT NULL DEFAULT 0,
+            valor NUMERIC NOT NULL DEFAULT 0,
             FOREIGN KEY (ordem_servico_id) REFERENCES ordens_servico (id)
         )
     ''')
+
     conn.commit()
     conn.close()
 
@@ -117,27 +91,30 @@ def index():
 @app.route('/clientes', methods=['GET', 'POST'])
 def clientes():
     conn = get_db_connection()
+    cursor = conn.cursor()
     if request.method == 'POST':
         nome = request.form['nome']
         telefone = request.form['telefone']
         email = request.form.get('email', '')
         endereco = request.form.get('endereco', '')
-        conn.execute('INSERT INTO clientes (nome, telefone, email, endereco) VALUES (?, ?, ?, ?)', 
+        cursor.execute('INSERT INTO clientes (nome, telefone, email, endereco) VALUES (%s, %s, %s, %s)', 
                     (nome, telefone, email, endereco))
         conn.commit()
         return redirect(url_for('clientes'))
-    clientes = conn.execute('SELECT * FROM clientes').fetchall()
+    cursor.execute('SELECT * FROM clientes')
+    clientes = cursor.fetchall()
     conn.close()
     return render_template('clientes.html', clientes=clientes)
 
 @app.route('/adicionar_cliente', methods=['POST'])
 def adicionar_cliente():
     conn = get_db_connection()
+    cursor = conn.cursor()
     nome = request.form['nome']
     telefone = request.form['telefone']
     email = request.form['email']
     endereco = request.form['endereco']
-    conn.execute('INSERT INTO clientes (nome, telefone, email, endereco) VALUES (?, ?, ?, ?)', 
+    cursor.execute('INSERT INTO clientes (nome, telefone, email, endereco) VALUES (%s, %s, %s, %s)', 
                  (nome, telefone, email, endereco))
     conn.commit()
     conn.close()
@@ -146,24 +123,27 @@ def adicionar_cliente():
 @app.route('/editar_cliente/<int:id>', methods=['GET', 'POST'])
 def editar_cliente(id):
     conn = get_db_connection()
+    cursor = conn.cursor()
     if request.method == 'POST':
         nome = request.form['nome']
         telefone = request.form['telefone']
         email = request.form['email']
         endereco = request.form['endereco']
-        conn.execute('UPDATE clientes SET nome = ?, telefone = ?, email = ?, endereco = ? WHERE id = ?',
+        cursor.execute('UPDATE clientes SET nome = %s, telefone = %s, email = %s, endereco = %s WHERE id = %s',
                      (nome, telefone, email, endereco, id))
         conn.commit()
         conn.close()
         return redirect(url_for('clientes'))
-    cliente = conn.execute('SELECT * FROM clientes WHERE id = ?', (id,)).fetchone()
+    cursor.execute('SELECT * FROM clientes WHERE id = %s', (id,))
+    cliente = cursor.fetchone()
     conn.close()
     return render_template('editar_cliente.html', cliente=cliente)
 
 @app.route('/excluir_cliente/<int:id>')
 def excluir_cliente(id):
     conn = get_db_connection()
-    conn.execute('DELETE FROM clientes WHERE id = ?', (id,))
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM clientes WHERE id = %s', (id,))
     conn.commit()
     conn.close()
     return redirect(url_for('clientes'))
@@ -172,19 +152,22 @@ def excluir_cliente(id):
 @app.route('/ordens_servico', methods=['GET', 'POST'])
 def ordens_servico():
     conn = get_db_connection()
+    cursor = conn.cursor()
     
-    os_list = conn.execute('''
+    cursor.execute('''
         SELECT os.id, c.nome AS cliente, os.data, 
                os.cliente_id, os.veiculo, os.placa, os.valor, os.observacoes,
-               GROUP_CONCAT(servicos.descricao) as servicos_descricao
+               string_agg(servicos.descricao, ', ') as servicos_descricao
         FROM ordens_servico os
         JOIN clientes c ON os.cliente_id = c.id
         LEFT JOIN servicos_os servicos ON os.id = servicos.ordem_servico_id
-        GROUP BY os.id
+        GROUP BY os.id, c.nome
         ORDER BY os.id DESC
-    ''').fetchall()
+    ''')
+    os_list = cursor.fetchall()
     
-    clientes = conn.execute('SELECT * FROM clientes').fetchall()
+    cursor.execute('SELECT * FROM clientes')
+    clientes = cursor.fetchall()
     conn.close()
     
     # Passar a data atual para o template para pré-preencher o campo de data
@@ -194,6 +177,7 @@ def ordens_servico():
 @app.route('/adicionar_os', methods=['POST'])
 def adicionar_os():
     conn = get_db_connection()
+    cursor = conn.cursor()
     cliente_id = request.form['cliente_id']
     data = request.form['data']
     veiculo = request.form.get('veiculo', '')
@@ -209,15 +193,15 @@ def adicionar_os():
         descricao_principal = descricoes[0]
     
     # Criar a ordem de serviço (valor total será atualizado depois)
-    cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO ordens_servico (cliente_id, descricao, data, veiculo, placa, valor, observacoes)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
     ''', (cliente_id, descricao_principal, data, veiculo, placa, 0, observacoes))
     
     # Pegar o ID da ordem recém-criada
-    ordem_id = cursor.lastrowid
-      # Inserir cada serviço - extrair o valor da descrição
+    ordem_id = cursor.fetchone()[0]
+    
+    # Inserir cada serviço - extrair o valor da descrição
     valor_total = 0
     for descricao in descricoes:
         if descricao.strip():  # Apenas processar linhas não vazias
@@ -227,14 +211,14 @@ def adicionar_os():
             
             cursor.execute('''
                 INSERT INTO servicos_os (ordem_servico_id, descricao, valor)
-                VALUES (?, ?, ?)
+                VALUES (%s, %s, %s)
             ''', (ordem_id, descricao, valor))
     
-    # Atualizar o valor total da OS (opcional, não usaremos esse valor)
+    # Atualizar o valor total da OS
     cursor.execute('''
         UPDATE ordens_servico 
-        SET valor = ?
-        WHERE id = ?
+        SET valor = %s
+        WHERE id = %s
     ''', (valor_total, ordem_id))
     
     conn.commit()
@@ -248,6 +232,7 @@ def adicionar_os():
 @app.route('/editar_os/<int:id>', methods=['GET', 'POST'])
 def editar_os(id):
     conn = get_db_connection()
+    cursor = conn.cursor()
     if request.method == 'POST':
         cliente_id = request.form['cliente_id']
         data = request.form['data']
@@ -271,44 +256,48 @@ def editar_os(id):
                 valor_total += valor
         
         # Atualizar a ordem de serviço
-        conn.execute('''
+        cursor.execute('''
             UPDATE ordens_servico 
-            SET cliente_id = ?, descricao = ?, data = ?, veiculo = ?, 
-                placa = ?, valor = ?, observacoes = ? 
-            WHERE id = ?
+            SET cliente_id = %s, descricao = %s, data = %s, veiculo = %s, 
+                placa = %s, valor = %s, observacoes = %s 
+            WHERE id = %s
         ''', (cliente_id, descricao_principal, data, veiculo, placa, valor_total, observacoes, id))
         
         # Remover serviços antigos
-        conn.execute('DELETE FROM servicos_os WHERE ordem_servico_id = ?', (id,))
+        cursor.execute('DELETE FROM servicos_os WHERE ordem_servico_id = %s', (id,))
         
         # Inserir novos serviços
         for descricao in descricoes:
             if descricao.strip():
                 # Extrair valor da descrição
                 valor = extrair_valor_de_descricao(descricao)
-                conn.execute('''
+                cursor.execute('''
                     INSERT INTO servicos_os (ordem_servico_id, descricao, valor)
-                    VALUES (?, ?, ?)
+                    VALUES (%s, %s, %s)
                 ''', (id, descricao, valor))
         
         conn.commit()
         return redirect(url_for('ordens_servico'))
     
-    ordem = conn.execute('SELECT * FROM ordens_servico WHERE id = ?', (id,)).fetchone()
-    servicos = conn.execute('''
+    cursor.execute('SELECT * FROM ordens_servico WHERE id = %s', (id,))
+    ordem = cursor.fetchone()
+    cursor.execute('''
         SELECT descricao, valor 
         FROM servicos_os 
-        WHERE ordem_servico_id = ?
+        WHERE ordem_servico_id = %s
         ORDER BY id
-    ''', (id,)).fetchall()
-    clientes = conn.execute('SELECT * FROM clientes').fetchall()
+    ''', (id,))
+    servicos = cursor.fetchall()
+    cursor.execute('SELECT * FROM clientes')
+    clientes = cursor.fetchall()
     conn.close()
     return render_template('editar_os.html', ordem=ordem, clientes=clientes, servicos=servicos)
 
 @app.route('/excluir_os/<int:id>')
 def excluir_os(id):
     conn = get_db_connection()
-    conn.execute('DELETE FROM ordens_servico WHERE id = ?', (id,))
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM ordens_servico WHERE id = %s', (id,))
     conn.commit()
     conn.close()
     return redirect(url_for('ordens_servico'))
@@ -319,22 +308,26 @@ from gerar_pdf import PDF
 @app.route('/gerar_pdf_os/<int:id>')
 def gerar_pdf_os(id):
     conn = get_db_connection()
+    cursor = conn.cursor()
     
     try:
         # Buscar dados da ordem de serviço e do cliente
-        ordem = conn.execute('SELECT * FROM ordens_servico WHERE id = ?', (id,)).fetchone()
+        cursor.execute('SELECT * FROM ordens_servico WHERE id = %s', (id,))
+        ordem = cursor.fetchone()
         if not ordem:
             return "Ordem de serviço não encontrada", 404
             
-        cliente = conn.execute('SELECT * FROM clientes WHERE id = ?', (ordem['cliente_id'],)).fetchone()
+        cursor.execute('SELECT * FROM clientes WHERE id = %s', (ordem['cliente_id'],))
+        cliente = cursor.fetchone()
         
         # Buscar serviços da OS
-        servicos = conn.execute('''
+        cursor.execute('''
             SELECT descricao, valor 
             FROM servicos_os 
-            WHERE ordem_servico_id = ?
+            WHERE ordem_servico_id = %s
             ORDER BY id
-        ''', (id,)).fetchall()
+        ''', (id,))
+        servicos = cursor.fetchall()
         
         # Criar o PDF
         class PDF(FPDF):
@@ -482,27 +475,30 @@ def gerar_pdf_os(id):
 @app.route('/estoque', methods=['GET', 'POST'])
 def estoque():
     conn = get_db_connection()
+    cursor = conn.cursor()
     if request.method == 'POST':
         nome = request.form['nome']
         quantidade = request.form['quantidade']
         valor = request.form.get('valor', 0)
         valor_instalado = request.form.get('valor_instalado', 0)
-        conn.execute('INSERT INTO pecas (nome, quantidade, valor, valor_instalado) VALUES (?, ?, ?, ?)', 
+        cursor.execute('INSERT INTO pecas (nome, quantidade, valor, valor_instalado) VALUES (%s, %s, %s, %s)', 
                     (nome, quantidade, valor, valor_instalado))
         conn.commit()
         return redirect(url_for('estoque'))
-    pecas = conn.execute('SELECT * FROM pecas').fetchall()
+    cursor.execute('SELECT * FROM pecas')
+    pecas = cursor.fetchall()
     conn.close()
     return render_template('estoque.html', pecas=pecas)
 
 @app.route('/adicionar_peca', methods=['POST'])
 def adicionar_peca():
     conn = get_db_connection()
+    cursor = conn.cursor()
     nome = request.form['nome']
     quantidade = request.form['quantidade']
     valor = request.form.get('valor', 0)
     valor_instalado = request.form.get('valor_instalado', 0)
-    conn.execute('INSERT INTO pecas (nome, quantidade, valor, valor_instalado) VALUES (?, ?, ?, ?)', 
+    cursor.execute('INSERT INTO pecas (nome, quantidade, valor, valor_instalado) VALUES (%s, %s, %s, %s)', 
                  (nome, quantidade, valor, valor_instalado))
     conn.commit()
     conn.close()
@@ -511,25 +507,28 @@ def adicionar_peca():
 @app.route('/editar_peca/<int:id>', methods=['GET', 'POST'])
 def editar_peca(id):
     conn = get_db_connection()
+    cursor = conn.cursor()
     if request.method == 'POST':
         nome = request.form['nome']
         quantidade = request.form['quantidade']
         valor = request.form.get('valor', 0)
         valor_instalado = request.form.get('valor_instalado', 0)
-        conn.execute('UPDATE pecas SET nome = ?, quantidade = ?, valor = ?, valor_instalado = ? WHERE id = ?',
+        cursor.execute('UPDATE pecas SET nome = %s, quantidade = %s, valor = %s, valor_instalado = %s WHERE id = %s',
                      (nome, quantidade, valor, valor_instalado, id))
         conn.commit()
         conn.close()
         return redirect(url_for('estoque'))
     
-    peca = conn.execute('SELECT * FROM pecas WHERE id = ?', (id,)).fetchone()
+    cursor.execute('SELECT * FROM pecas WHERE id = %s', (id,))
+    peca = cursor.fetchone()
     conn.close()
     return render_template('editar_peca.html', peca=peca)
 
 @app.route('/excluir_peca/<int:id>')
 def excluir_peca(id):
     conn = get_db_connection()
-    conn.execute('DELETE FROM pecas WHERE id = ?', (id,))
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM pecas WHERE id = %s', (id,))
     conn.commit()
     conn.close()
     return redirect(url_for('estoque'))
@@ -537,6 +536,7 @@ def excluir_peca(id):
 @app.route('/adicionar_servico/<int:os_id>', methods=['POST'])
 def adicionar_servico(os_id):
     conn = get_db_connection()
+    cursor = conn.cursor()
     descricao = request.form['descricao_servico']
     valor = request.form.get('valor_servico', '0')
     try:
@@ -545,16 +545,17 @@ def adicionar_servico(os_id):
         valor = 0.0
         
     # Inserir o serviço
-    conn.execute('''
+    cursor.execute('''
         INSERT INTO servicos_os (ordem_servico_id, descricao, valor)
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
     ''', (os_id, descricao, valor))
     
     # Atualizar o valor total da OS
-    servicos = conn.execute('SELECT valor FROM servicos_os WHERE ordem_servico_id = ?', (os_id,)).fetchall()
+    cursor.execute('SELECT valor FROM servicos_os WHERE ordem_servico_id = %s', (os_id,))
+    servicos = cursor.fetchall()
     valor_total = sum([s['valor'] for s in servicos])
     
-    conn.execute('UPDATE ordens_servico SET valor = ? WHERE id = ?', (valor_total, os_id))
+    cursor.execute('UPDATE ordens_servico SET valor = %s WHERE id = %s', (valor_total, os_id))
     
     conn.commit()
     conn.close()
@@ -586,6 +587,5 @@ def extrair_valor_de_descricao(descricao):
 
 # Executar o app
 if __name__ == '__main__':
-    criar_tabelas()  # Chama a função para criar as tabelas antes de iniciar o app
-    criar_tabela_servicos()
+    criar_tabelas()  # Chama a função para criar todas as tabelas antes de iniciar o app
     app.run(debug=True)

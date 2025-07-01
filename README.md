@@ -4,7 +4,7 @@ Um sistema web completo para gerenciamento de ordens de serviço, cadastro de cl
 
 ![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
 ![Flask](https://img.shields.io/badge/flask-3.1.1-lightgrey.svg)
-![SQLite](https://img.shields.io/badge/sqlite-3-green.svg)
+![PostgreSQL](https://img.shields.io/badge/postgresql-17-blue.svg)
 
 ## 📋 Funcionalidades
 
@@ -45,6 +45,7 @@ Um sistema web completo para gerenciamento de ordens de serviço, cadastro de cl
 ### Pré-requisitos
 - Python 3.9 ou superior
 - pip (gerenciador de pacotes Python)
+- PostgreSQL 17 ou superior
 
 ### Passos para instalação
 
@@ -70,12 +71,20 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. Execute a aplicação:
+4. Configure o PostgreSQL:
+```bash
+# Criar usuário e banco de dados
+psql -U postgres
+CREATE USER admin WITH PASSWORD 'admin' SUPERUSER;
+CREATE DATABASE osweb OWNER admin;
+```
+
+5. Execute a aplicação:
 ```bash
 python app.py
 ```
 
-5. Acesse no navegador:
+6. Acesse no navegador:
 ```
 http://127.0.0.1:5000/
 ```
@@ -104,7 +113,8 @@ A documentação completa do sistema está disponível nos seguintes arquivos:
 
 - **Backend**:
   - Flask: Framework web em Python
-  - SQLite: Banco de dados relacional
+  - PostgreSQL: Banco de dados relacional
+  - psycopg2: Driver PostgreSQL para Python
   - Flask-RESTful: Criação de API REST
   - FPDF: Geração de arquivos PDF
 
@@ -124,29 +134,28 @@ A documentação completa do sistema está disponível nos seguintes arquivos:
 OsWeb/
 ├── app.py                 # Arquivo principal da aplicação
 ├── requirements.txt       # Dependências do projeto
-├── banco.db               # Banco de dados SQLite
-├── .gitignore             # Arquivos ignorados pelo Git
-├── README.md              # Documentação principal
-├── static/                # Arquivos estáticos
-│   ├── css/               # Estilos CSS
-│   ├── js/                # Scripts JavaScript
-│   └── img/               # Imagens e logos
-├── templates/             # Templates HTML
-│   ├── base.html          # Template base
-│   ├── clientes.html      # Gestão de clientes
-│   ├── os.html            # Gestão de ordens de serviço
-│   ├── estoque.html       # Gestão de estoque
-│   └── ...                # Outros templates
-├── api/                   # Módulos da API REST
-│   ├── __init__.py        # Inicialização da API
-│   ├── resources.py       # Recursos da API
-│   └── external.py        # Integrações com APIs externas
-├── docs/                  # Documentação
-│   ├── api.md             # Documentação da API
-│   ├── deploy.md          # Guia de implantação
-│   └── manual.md          # Manual do usuário
-└── tests/                 # Testes automatizados
-    └── test_app.py        # Testes da aplicação
+├── .gitignore            # Arquivos ignorados pelo Git
+├── README.md             # Documentação principal
+├── static/               # Arquivos estáticos
+│   ├── css/              # Estilos CSS
+│   ├── js/               # Scripts JavaScript
+│   └── img/              # Imagens e logos
+├── templates/            # Templates HTML
+│   ├── base.html         # Template base
+│   ├── clientes.html     # Gestão de clientes
+│   ├── os.html           # Gestão de ordens de serviço
+│   ├── estoque.html      # Gestão de estoque
+│   └── ...               # Outros templates
+├── api/                  # Módulos da API REST
+│   ├── __init__.py       # Inicialização da API
+│   ├── resources.py      # Recursos da API
+│   └── external.py       # Integrações com APIs externas
+├── docs/                 # Documentação
+│   ├── api.md            # Documentação da API
+│   ├── deploy.md         # Guia de implantação
+│   └── manual.md         # Manual do usuário
+└── tests/               # Testes automatizados
+    └── test_app.py      # Testes da aplicação
 ```
 
 ## 🤝 Contribuições
