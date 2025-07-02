@@ -485,7 +485,7 @@ def estoque():
                     (nome, quantidade, valor, valor_instalado))
         conn.commit()
         return redirect(url_for('estoque'))
-    cursor.execute('SELECT * FROM pecas')
+    cursor.execute('SELECT * FROM pecas ORDER BY nome ASC')  # Ordenar por nome em ordem alfabética
     pecas = cursor.fetchall()
     conn.close()
     return render_template('estoque.html', pecas=pecas)
@@ -610,7 +610,7 @@ def api_ordem_servico(id):
 def api_estoque():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM pecas')
+    cursor.execute('SELECT * FROM pecas ORDER BY nome ASC')  # Ordenar por nome em ordem alfabética
     pecas = cursor.fetchall()
     conn.close()
     return jsonify([dict(peca) for peca in pecas])
