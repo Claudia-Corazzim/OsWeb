@@ -157,6 +157,12 @@ OsWeb/
 └── tests/               # Testes automatizados
     └── test_app.py      # Testes da aplicação
 ```
+## GiTHub
+- git status
+- git add .
+- git commit -m "mensagem"
+- git push origin master
+
 
 ## 🤝 Contribuições
 

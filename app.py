@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, make_response, send_file, jsonify, flash
 import psycopg2
 from psycopg2.extras import DictCursor
 from datetime import datetime
@@ -12,6 +12,7 @@ from api import init_api
 from gerar_pdf import PDF
 
 app = Flask(__name__)
+app.secret_key = 'sua_chave_secreta_aqui'  # Necessário para usar flash messages
 # Inicializar a API REST
 init_api(app)
 
@@ -203,8 +204,15 @@ def adicionar_os():
     
     # Inserir cada serviço - extrair o valor da descrição
     valor_total = 0
+    alertas_estoque = []
+    
     for descricao in descricoes:
         if descricao.strip():  # Apenas processar linhas não vazias
+            # Verificar e atualizar estoque
+            alerta = verificar_e_atualizar_estoque(cursor, descricao)
+            if alerta:
+                alertas_estoque.append(alerta)
+            
             # Extrair valor da descrição
             valor = extrair_valor_de_descricao(descricao)
             valor_total += valor
@@ -223,6 +231,11 @@ def adicionar_os():
     
     conn.commit()
     conn.close()
+    
+    # Se houver alertas de estoque, mostrar para o usuário
+    if alertas_estoque:
+        flash('\\n'.join(alertas_estoque), 'warning')
+    
     return redirect(url_for('ordens_servico'))
     
     conn.commit()
@@ -584,6 +597,30 @@ def extrair_valor_de_descricao(descricao):
         except ValueError:
             return 0.0
     return 0.0
+
+# Função para verificar e atualizar estoque
+def verificar_e_atualizar_estoque(cursor, descricao):
+    """
+    Verifica se a peça existe no estoque e atualiza a quantidade.
+    Retorna uma mensagem se o estoque estiver baixo.
+    """
+    # Extrair nome da peça da descrição (assume que está antes do hífen)
+    nome_peca = descricao.split('-')[0].strip() if '-' in descricao else descricao.strip()
+    
+    # Buscar a peça no estoque
+    cursor.execute('SELECT id, quantidade FROM pecas WHERE nome ILIKE %s', (nome_peca,))
+    peca = cursor.fetchone()
+    
+    if peca and peca['quantidade'] > 0:
+        nova_quantidade = peca['quantidade'] - 1
+        cursor.execute('UPDATE pecas SET quantidade = %s WHERE id = %s', 
+                      (nova_quantidade, peca['id']))
+        
+        # Verificar se o estoque está baixo (menos de 3 unidades)
+        if nova_quantidade < 3:
+            return f"ATENÇÃO: Estoque baixo para {nome_peca} (Restam apenas {nova_quantidade} unidades)"
+    
+    return None
 
 # ---------- API ENDPOINTS ----------
 @app.route('/api/clientes', methods=['GET'])
