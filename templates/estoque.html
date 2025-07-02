@@ -142,34 +142,27 @@
     </div>
 
     <script>
-        // Função para resetar o scroll e focar no primeiro campo após o submit
-        function resetarScroll() {
-            // Armazenar a informação que o form foi enviado
-            sessionStorage.setItem('formEnviado', 'true');
-        }
-
         // Quando a página carrega
         window.onload = function() {
-            // Verificar se veio de um envio de formulário
-            if (sessionStorage.getItem('formEnviado')) {
-                // Limpar a flag
-                sessionStorage.removeItem('formEnviado');
-                // Scrollar para o topo
-                window.scrollTo(0, 0);
-                // Focar no primeiro campo
-                document.getElementById('nome').focus();
-            }
+            // Sempre focar no campo nome ao carregar a página
+            document.getElementById('nome').focus();
         }
 
-        // Limpar campos após o submit
-        document.getElementById('formPeca').addEventListener('submit', function() {
+        // Função para resetar formulário
+        function resetarScroll() {
+            // Prevenir o comportamento padrão
             setTimeout(function() {
+                // Limpar os campos
                 document.getElementById('nome').value = '';
                 document.getElementById('quantidade').value = '';
                 document.getElementById('valor').value = '';
                 document.getElementById('valor_instalado').value = '';
+                
+                // Rolar para o topo e focar no campo nome
+                window.scrollTo(0, 0);
+                document.getElementById('nome').focus();
             }, 100);
-        });
+        }
     </script>
 </body>
 </html>
