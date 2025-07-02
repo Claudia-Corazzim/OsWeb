@@ -602,7 +602,7 @@ def extrair_valor_de_descricao(descricao):
 def verificar_e_atualizar_estoque(cursor, descricao):
     """
     Verifica se a peça existe no estoque e atualiza a quantidade.
-    Retorna uma mensagem se o estoque estiver baixo.
+    Retorna uma mensagem se o estoque estiver baixo (menos de 2 unidades).
     """
     # Extrair nome da peça da descrição (assume que está antes do hífen)
     nome_peca = descricao.split('-')[0].strip() if '-' in descricao else descricao.strip()
@@ -616,9 +616,11 @@ def verificar_e_atualizar_estoque(cursor, descricao):
         cursor.execute('UPDATE pecas SET quantidade = %s WHERE id = %s', 
                       (nova_quantidade, peca['id']))
         
-        # Verificar se o estoque está baixo (menos de 3 unidades)
-        if nova_quantidade < 3:
-            return f"ATENÇÃO: Estoque baixo para {nome_peca} (Restam apenas {nova_quantidade} unidades)"
+        # Verificar se o estoque está baixo (menos de 2 unidades)
+        if nova_quantidade < 2:
+            return f"ATENÇÃO: Estoque CRÍTICO para {nome_peca} (Restam apenas {nova_quantidade} unidade{'s' if nova_quantidade != 1 else ''})"
+        elif nova_quantidade == 2:
+            return f"ATENÇÃO: Estoque baixo para {nome_peca} (Restam apenas 2 unidades)"
     
     return None
 
