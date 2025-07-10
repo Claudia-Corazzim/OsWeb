@@ -6,14 +6,18 @@ from fpdf import FPDF
 import os
 import tempfile
 import re  # Add this for regex pattern matching
-from dotenv import load_dotenv
+# Para desenvolvimento local, pode comentar as duas linhas abaixo se não tiver .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Em produção (Railway), as variáveis de ambiente já estão disponíveis
+    pass
+
 # Importar a API REST
 from api import init_api
 # Importar a função de geração de PDF
 from gerar_pdf import PDF
-
-# Carregar variáveis de ambiente
-load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')  # Usar variável de ambiente
