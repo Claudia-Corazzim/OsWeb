@@ -6,24 +6,37 @@ from fpdf import FPDF
 import os
 import tempfile
 import re  # Add this for regex pattern matching
+from dotenv import load_dotenv
 # Importar a API REST
 from api import init_api
 # Importar a função de geração de PDF
 from gerar_pdf import PDF
 
+# Carregar variáveis de ambiente
+load_dotenv()
+
 app = Flask(__name__)
-app.secret_key = 'sua_chave_secreta_aqui'  # Necessário para usar flash messages
+app.secret_key = os.getenv('SECRET_KEY', 'sua_chave_secreta_aqui')  # Usar variável de ambiente
 # Inicializar a API REST
 init_api(app)
 
 def get_db_connection():
-    conn = psycopg2.connect(
-        dbname="osweb",
-        user="admin",
-        password="admin",
-        host="localhost",
-        port="5432"
-    )
+    # Usar variáveis de ambiente para a conexão com PostgreSQL
+    database_url = os.getenv('DATABASE_URL')
+    
+    if database_url:
+        # Railway fornece DATABASE_URL
+        conn = psycopg2.connect(database_url)
+    else:
+        # Desenvolvimento local
+        conn = psycopg2.connect(
+            dbname=os.getenv('DB_NAME', 'osweb'),
+            user=os.getenv('DB_USER', 'admin'),
+            password=os.getenv('DB_PASSWORD', 'admin'),
+            host=os.getenv('DB_HOST', 'localhost'),
+            port=os.getenv('DB_PORT', '5432')
+        )
+    
     conn.cursor_factory = DictCursor
     return conn
 
@@ -236,10 +249,6 @@ def adicionar_os():
     if alertas_estoque:
         flash('\\n'.join(alertas_estoque), 'warning')
     
-    return redirect(url_for('ordens_servico'))
-    
-    conn.commit()
-    conn.close()
     return redirect(url_for('ordens_servico'))
 
 @app.route('/editar_os/<int:id>', methods=['GET', 'POST'])
@@ -649,7 +658,14 @@ def api_ordem_servico(id):
 def api_estoque():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM pecas ORDER BY nome ASC')  # Ordenar por nome em ordem alfabética
+    # Se tiver um parâmetro de busca, filtra as peças
+    search = request.args.get('search', '').strip()
+    if search:
+        # Criar o padrão de busca como %termo%
+        search_pattern = f'%{search}%'
+        cursor.execute('SELECT * FROM pecas WHERE nome ILIKE %s ORDER BY nome ASC', (search_pattern,))
+    else:
+        cursor.execute('SELECT * FROM pecas ORDER BY nome ASC')
     pecas = cursor.fetchall()
     conn.close()
     return jsonify([dict(peca) for peca in pecas])
@@ -657,4 +673,5 @@ def api_estoque():
 # Executar o app
 if __name__ == '__main__':
     criar_tabelas()  # Chama a função para criar todas as tabelas antes de iniciar o app
-    app.run(debug=True)
+    port = int(os.getenv('PORT', 5000))  # Railway define a porta via variável de ambiente
+    app.run(host='0.0.0.0', port=port, debug=False)
