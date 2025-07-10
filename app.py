@@ -161,9 +161,31 @@ def editar_cliente(id):
 def excluir_cliente(id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM clientes WHERE id = %s', (id,))
-    conn.commit()
-    conn.close()
+    
+    try:
+        # Verificar se o cliente tem ordens de serviço associadas
+        cursor.execute('SELECT COUNT(*) FROM ordens_servico WHERE cliente_id = %s', (id,))
+        count = cursor.fetchone()[0]
+        
+        if count > 0:
+            flash(f'Não é possível excluir o cliente. Existem {count} ordem(ns) de serviço associada(s) a este cliente.', 'error')
+        else:
+            # Buscar nome do cliente para mostrar na mensagem
+            cursor.execute('SELECT nome FROM clientes WHERE id = %s', (id,))
+            cliente = cursor.fetchone()
+            
+            if cliente:
+                cursor.execute('DELETE FROM clientes WHERE id = %s', (id,))
+                conn.commit()
+                flash(f'Cliente "{cliente["nome"]}" excluído com sucesso!', 'success')
+            else:
+                flash('Cliente não encontrado.', 'error')
+    
+    except Exception as e:
+        flash(f'Erro ao excluir cliente: {str(e)}', 'error')
+    finally:
+        conn.close()
+    
     return redirect(url_for('clientes'))
 
 # ---------- ROTAS DE ORDENS DE SERVIÇO ----------
@@ -323,9 +345,24 @@ def editar_os(id):
 def excluir_os(id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM ordens_servico WHERE id = %s', (id,))
-    conn.commit()
-    conn.close()
+    
+    try:
+        # Primeiro excluir os serviços associados à ordem
+        cursor.execute('DELETE FROM servicos_os WHERE ordem_servico_id = %s', (id,))
+        
+        # Depois excluir a ordem de serviço
+        cursor.execute('DELETE FROM ordens_servico WHERE id = %s', (id,))
+        
+        conn.commit()
+        flash('Ordem de serviço excluída com sucesso!', 'success')
+    
+    except Exception as e:
+        conn.rollback()
+        flash(f'Erro ao excluir ordem de serviço: {str(e)}', 'error')
+    
+    finally:
+        conn.close()
+    
     return redirect(url_for('ordens_servico'))
 
 # Importar a função de geração de PDF
@@ -554,9 +591,25 @@ def editar_peca(id):
 def excluir_peca(id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM pecas WHERE id = %s', (id,))
-    conn.commit()
-    conn.close()
+    
+    try:
+        # Buscar nome da peça para mostrar na mensagem
+        cursor.execute('SELECT nome FROM pecas WHERE id = %s', (id,))
+        peca = cursor.fetchone()
+        
+        if peca:
+            cursor.execute('DELETE FROM pecas WHERE id = %s', (id,))
+            conn.commit()
+            flash(f'Peça "{peca["nome"]}" excluída com sucesso!', 'success')
+        else:
+            flash('Peça não encontrada.', 'error')
+    
+    except Exception as e:
+        flash(f'Erro ao excluir peça: {str(e)}', 'error')
+    
+    finally:
+        conn.close()
+    
     return redirect(url_for('estoque'))
 
 @app.route('/adicionar_servico/<int:os_id>', methods=['POST'])
