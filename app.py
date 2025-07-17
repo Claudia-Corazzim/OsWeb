@@ -194,21 +194,33 @@ def ordens_servico():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
-        SELECT os.id, c.nome AS cliente, os.data, 
-               os.cliente_id, os.veiculo, os.placa, os.valor, os.observacoes,
-               string_agg(servicos.descricao, ', ') as servicos_descricao
-        FROM ordens_servico os
-        JOIN clientes c ON os.cliente_id = c.id
-        LEFT JOIN servicos_os servicos ON os.id = servicos.ordem_servico_id
-        GROUP BY os.id, c.nome
-        ORDER BY os.id DESC
-    ''')
-    os_list = cursor.fetchall()
+    try:
+        cursor.execute('''
+            SELECT os.id, c.nome AS cliente, os.data, 
+                   os.cliente_id, os.veiculo, os.placa, os.valor, os.observacoes,
+                   string_agg(servicos.descricao, ', ') as servicos_descricao
+            FROM ordens_servico os
+            JOIN clientes c ON os.cliente_id = c.id
+            LEFT JOIN servicos_os servicos ON os.id = servicos.ordem_servico_id
+            GROUP BY os.id, c.nome, os.data, os.cliente_id, os.veiculo, 
+                     os.placa, os.valor, os.observacoes
+            ORDER BY os.id DESC
+        ''')
+        os_list = cursor.fetchall()
+    except Exception as e:
+        print(f"Erro na consulta SQL: {str(e)}")
+        flash(f"Erro ao carregar ordens de serviço: {str(e)}", 'error')
+        os_list = []
     
-    cursor.execute('SELECT * FROM clientes')
-    clientes = cursor.fetchall()
-    conn.close()
+    try:
+        cursor.execute('SELECT * FROM clientes')
+        clientes = cursor.fetchall()
+    except Exception as e:
+        print(f"Erro ao carregar clientes: {str(e)}")
+        flash(f"Erro ao carregar lista de clientes: {str(e)}", 'error')
+        clientes = []
+    finally:
+        conn.close()
     
     # Passar a data atual para o template para pré-preencher o campo de data
     today = datetime.now().strftime('%Y-%m-%d')
@@ -731,4 +743,4 @@ def api_estoque():
 if __name__ == '__main__':
     criar_tabelas()  # Chama a função para criar todas as tabelas antes de iniciar o app
     port = int(os.getenv('PORT', 5000))  # Railway define a porta via variável de ambiente
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=True)  # Ativado modo debug para ver erros
