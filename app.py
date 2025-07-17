@@ -743,4 +743,5 @@ def api_estoque():
 if __name__ == '__main__':
     criar_tabelas()  # Chama a função para criar todas as tabelas antes de iniciar o app
     port = int(os.getenv('PORT', 5000))  # Railway define a porta via variável de ambiente
-    app.run(host='0.0.0.0', port=port, debug=True)  # Ativado modo debug para ver erros
+    debug_mode = os.getenv('DEBUG', 'False').lower() == 'true'  # Debug apenas se definido
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
